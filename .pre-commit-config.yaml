@@ -1,0 +1,14 @@
+repos:
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: bash -c 'files=(); for f in "$@"; do files+=("${f#src/}"); done; cd src && gofmt -w "${files[@]}"' --
+        language: system
+        files: ^src/.*\.go$
+      - id: golangci-lint
+        name: golangci-lint
+        entry: bash -c 'cd src && GOCACHE="${GOCACHE:-/tmp/go-build-cache}" GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/golangci-lint-cache}" golangci-lint run -c ../.golangci.yml ./...'
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.go$

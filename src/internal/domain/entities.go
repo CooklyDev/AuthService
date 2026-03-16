@@ -1,0 +1,57 @@
+package domain
+
+import (
+	"errors"
+	"strings"
+
+	"github.com/google/uuid"
+)
+
+type User struct {
+	ID             uuid.UUID
+	Username       string
+	Email          string
+	HashedPassword string
+}
+
+type Session struct {
+	ID     uuid.UUID
+	UserID uuid.UUID
+}
+
+func ValidatePassword(_ string) bool { // TODO: Implement validation
+	return true
+}
+
+func NewUser(id uuid.UUID, username string, email string, password string) (*User, error) {
+	username = strings.TrimSpace(username)
+	email = strings.TrimSpace(email)
+
+	if username == "" {
+		return nil, errors.New("invalid argument: username is required")
+	}
+	if email == "" {
+		return nil, errors.New("invalid argument: email is required")
+	}
+
+	return &User{
+		ID:             id,
+		Username:       username,
+		Email:          email,
+		HashedPassword: password,
+	}, nil
+}
+
+func NewSession(id uuid.UUID, userID uuid.UUID) (*Session, error) {
+	if id == uuid.Nil {
+		return nil, errors.New("invalid argument: session id is required")
+	}
+	if userID == uuid.Nil {
+		return nil, errors.New("invalid argument: user id is required")
+	}
+
+	return &Session{
+		ID:     id,
+		UserID: userID,
+	}, nil
+}

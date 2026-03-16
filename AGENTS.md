@@ -37,7 +37,7 @@ Base → User → Account:
 
 - Registration
 - Login / Logout
-- Name
+- Username
 - Email
 
 Do NOT implement any functionality that is not listed above.
@@ -52,7 +52,7 @@ Auth Service is responsible only for:
 - user login
 - user logout
 - storing user account data:
-  - name
+  - username
   - email
 
 The service should not handle:
@@ -72,11 +72,10 @@ The service should not handle:
 User entity must contain only:
 
 - id
-- name
+- username
 - email
+- password
 
-If password storage is required for authentication, it may be used internally,
-but it must not expand the domain scope beyond the roadmap.
 
 
 ---------------------------------------------------------------------
@@ -205,6 +204,62 @@ The task must not be considered complete if tests fail.
 
 ---------------------------------------------------------------------
 
+# Command Usage
+
+Use commands from the correct directory:
+
+- run `pre-commit` commands from the repository root
+- run Go module commands from `src`
+
+Prefer the following commands:
+
+- formatting: `cd src && gofmt -w <files>`
+- unit tests: `cd src && go test ./...`
+- linter: `cd src && golangci-lint run -c ../.golangci.yml ./...`
+- pre-commit full check: `pre-commit run --all-files`
+
+Do not replace these commands with alternative tools unless explicitly requested.
+
+
+---------------------------------------------------------------------
+
+# Logger Usage
+
+Use the logger in use cases, adapters, and application startup code.
+
+Do not log from domain entities.
+
+Use log levels consistently:
+
+- `Debug` for development diagnostics and branch-level execution details
+- `Info` for successful service lifecycle events and successful business operations
+- `Warn` for expected but undesirable situations such as invalid input, duplicate email, or failed login
+- `Error` for technical failures that prevent completing an operation
+
+Log only useful operational context:
+
+- operation name such as `register`, `login`, `logout`
+- `user_id` when available
+- masked `email` when needed
+- dependency name such as `postgres` or `redis`
+- request correlation identifiers when available
+- sanitized error details
+
+Never log sensitive data:
+
+- passwords
+- password hashes
+- access tokens
+- refresh tokens
+- session identifiers in plain form
+- secrets
+- full request bodies
+
+Prefer structured fields over string concatenation.
+
+
+---------------------------------------------------------------------
+
 # Testing Rules
 
 Business logic correctness is the highest priority.
@@ -223,6 +278,17 @@ Unit tests must:
 - avoid external dependencies
 
 Use mocks and stubs for external dependencies.
+
+For use case unit tests:
+
+- prefer tests for business branches and observable outcomes
+- do not test whether mocks or stubs were called internally
+- treat mocks and stubs as dumb test helpers by default
+- do not put business logic or meaningful branching into mocks or stubs
+- do not add separate tests for mocks or stubs
+- do not add tests that only verify passthrough of artificially injected dependency errors unless that behavior is itself the business rule being requested
+- keep stubs dumb: they should return predefined data and should not contain callback-driven logic
+- do not assert internal state captured by stubs when the same behavior can be verified through the use case result
 
 Follow the AAA pattern:
 
