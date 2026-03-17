@@ -60,13 +60,13 @@ func (c *Container) initPostgresUnitOfWork(ctx context.Context) (*adapters.UnitO
 	return adapters.NewUnitOfWorkPostgres(pool, c.logger), nil
 }
 
-func (c *Container) CreateAuthService(ctx context.Context) (usecases.AuthService, error) {
+func (c *Container) CreateAuthService(ctx context.Context) (*usecases.AuthService, error) {
 	uow, err := c.initPostgresUnitOfWork(ctx)
 	if err != nil {
-		return usecases.AuthService{}, err
+		return nil, err
 	}
 
-	return usecases.AuthService{
+	return &usecases.AuthService{
 		Logger: c.logger,
 		Hasher: c.hasher,
 		UoW:    uow,
