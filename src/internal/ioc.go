@@ -2,29 +2,68 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/CooklyDev/AuthService/internal/adapters"
 	"github.com/CooklyDev/AuthService/internal/domain"
 	"github.com/CooklyDev/AuthService/internal/usecases"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Container struct {
-	logger domain.Logger
-	hasher usecases.PasswordHasher
+	logger       domain.Logger
+	hasher       usecases.PasswordHasher
+	postgresPool *pgxpool.Pool
 }
 
 func NewContainer(
 	logger domain.Logger,
 	hasher usecases.PasswordHasher,
-) *Container {
-	return &Container{
-		logger: logger,
-		hasher: hasher,
+	ctx context.Context,
+) (*Container, error) {
+	pool, err := newPostgresPool(ctx, logger)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Container{
+		logger:       logger,
+		hasher:       hasher,
+		postgresPool: pool,
+	}, nil
 }
 
-func (c *Container) initPostgresUnitOfWork(ctx context.Context) (*adapters.UnitOfWorkPostgres, error) {
+func (c *Container) Close() {
+	if c.postgresPool == nil {
+		return
+	}
+
+	c.logger.Info("postgres pool closing: dependency=postgres")
+	c.postgresPool.Close()
+	c.postgresPool = nil
+	c.logger.Info("postgres pool closed: dependency=postgres")
+}
+
+func (c *Container) _() (*usecases.AuthService, error) {
+	if c.postgresPool == nil {
+		err := errors.New("postgres pool is not initialized")
+		c.logger.Error(
+			fmt.Sprintf(
+				"create auth service failed: dependency=postgres error=%s",
+				err.Error(),
+			),
+		)
+
+		return nil, err
+	}
+
+	uow := adapters.NewUnitOfWorkPostgres(c.postgresPool, c.logger)
+
+	return c.CreateAuthService(uow), nil
+}
+
+func newPostgresPool(ctx context.Context, logger domain.Logger) (*pgxpool.Pool, error) {
 	host := LookupEnvRequired("DB_HOST")
 	portStr := LookupEnvRequired("DB_PORT")
 	user := LookupEnvRequired("DB_USER")
@@ -34,7 +73,7 @@ func (c *Container) initPostgresUnitOfWork(ctx context.Context) (*adapters.UnitO
 	var port uint16
 	_, err := fmt.Sscanf(portStr, "%d", &port)
 	if err != nil {
-		c.logger.Error(
+		logger.Error(
 			fmt.Sprintf(
 				"init postgres pool failed: operation=parse_port error=%s",
 				err.Error(),
@@ -46,7 +85,7 @@ func (c *Container) initPostgresUnitOfWork(ctx context.Context) (*adapters.UnitO
 
 	pool, err := adapters.NewPostgresPool(
 		ctx,
-		c.logger,
+		logger,
 		host,
 		port,
 		user,
@@ -57,18 +96,13 @@ func (c *Container) initPostgresUnitOfWork(ctx context.Context) (*adapters.UnitO
 		return nil, err
 	}
 
-	return adapters.NewUnitOfWorkPostgres(pool, c.logger), nil
+	return pool, nil
 }
 
-func (c *Container) CreateAuthService(ctx context.Context) (*usecases.AuthService, error) {
-	uow, err := c.initPostgresUnitOfWork(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Container) CreateAuthService(uow *adapters.UnitOfWorkPostgres) *usecases.AuthService {
 	return &usecases.AuthService{
 		Logger: c.logger,
 		Hasher: c.hasher,
 		UoW:    uow,
-	}, nil
+	}
 }
