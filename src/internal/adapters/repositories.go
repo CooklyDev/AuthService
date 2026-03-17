@@ -16,7 +16,7 @@ type DBTX interface {
 	QueryRow(ctx context.Context, sql string, arguments ...interface{}) pgx.Row
 }
 
-// UserRepository implements usecases.UserRepo using PostgreSQL
+// UserRepository implements application.UserRepo using PostgreSQL
 type UserRepository struct {
 	db DBTX
 }
@@ -68,7 +68,7 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 	return &user, nil
 }
 
-// SessionRepository implements usecases.SessionRepo using PostgreSQL
+// SessionRepository implements application.SessionRepo using PostgreSQL
 type SessionRepository struct {
 	db DBTX
 }

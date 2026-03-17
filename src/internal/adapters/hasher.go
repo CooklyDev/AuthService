@@ -1,10 +1,10 @@
 package adapters
 
-import "github.com/CooklyDev/AuthService/internal/usecases"
+import "github.com/CooklyDev/AuthService/internal/application"
 
 type StubHasher struct{}
 
-var _ usecases.PasswordHasher = (*StubHasher)(nil)
+var _ application.PasswordHasher = (*StubHasher)(nil)
 
 func NewStubHasher() *StubHasher {
 	return &StubHasher{}

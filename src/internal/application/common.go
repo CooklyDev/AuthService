@@ -1,4 +1,4 @@
-package usecases
+package application
 
 type PasswordHasher interface {
 	Hash(password string) (string, error)

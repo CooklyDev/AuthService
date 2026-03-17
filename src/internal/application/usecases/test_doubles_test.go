@@ -1,6 +1,9 @@
 package usecases
 
-import "github.com/CooklyDev/AuthService/internal/domain"
+import (
+	"github.com/CooklyDev/AuthService/internal/application"
+	"github.com/CooklyDev/AuthService/internal/domain"
+)
 
 type userRepoStub struct {
 	user *domain.User
@@ -68,10 +71,10 @@ func (stub *uowStub) Rollback() error {
 	return nil
 }
 
-func (stub *uowStub) UserRepository() UserRepo {
+func (stub *uowStub) UserRepository() application.UserRepo {
 	return stub.userRepo
 }
 
-func (stub *uowStub) SessionRepository() SessionRepo {
+func (stub *uowStub) SessionRepository() application.SessionRepo {
 	return stub.sessionRepo
 }

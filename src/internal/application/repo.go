@@ -1,4 +1,4 @@
-package usecases
+package application
 
 import (
 	"github.com/CooklyDev/AuthService/internal/domain"

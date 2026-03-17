@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/CooklyDev/AuthService/internal/application"
 	"github.com/CooklyDev/AuthService/internal/domain"
 	"github.com/google/uuid"
 )
 
 type AuthService struct {
 	Logger domain.Logger
-	Hasher PasswordHasher
-	UoW    UnitOfWork
+	Hasher application.PasswordHasher
+	UoW    application.UnitOfWork
 }
 
 func (service AuthService) Register(username string, email string, password string) error {

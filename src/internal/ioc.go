@@ -6,20 +6,21 @@ import (
 	"fmt"
 
 	"github.com/CooklyDev/AuthService/internal/adapters"
+	"github.com/CooklyDev/AuthService/internal/application"
+	applicationusecases "github.com/CooklyDev/AuthService/internal/application/usecases"
 	"github.com/CooklyDev/AuthService/internal/domain"
-	"github.com/CooklyDev/AuthService/internal/usecases"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Container struct {
 	logger       domain.Logger
-	hasher       usecases.PasswordHasher
+	hasher       application.PasswordHasher
 	postgresPool *pgxpool.Pool
 }
 
 func NewContainer(
 	logger domain.Logger,
-	hasher usecases.PasswordHasher,
+	hasher application.PasswordHasher,
 	ctx context.Context,
 ) (*Container, error) {
 	pool, err := newPostgresPool(ctx, logger)
@@ -45,7 +46,7 @@ func (c *Container) Close() {
 	c.logger.Info("postgres pool closed: dependency=postgres")
 }
 
-func (c *Container) GetAuthService() (*usecases.AuthService, error) {
+func (c *Container) GetAuthService() (*applicationusecases.AuthService, error) {
 	if c.postgresPool == nil {
 		err := errors.New("postgres pool is not initialized")
 		c.logger.Error(
@@ -99,8 +100,8 @@ func newPostgresPool(ctx context.Context, logger domain.Logger) (*pgxpool.Pool, 
 	return pool, nil
 }
 
-func (c *Container) CreateAuthService(uow *adapters.UnitOfWorkPostgres) *usecases.AuthService {
-	return &usecases.AuthService{
+func (c *Container) CreateAuthService(uow *adapters.UnitOfWorkPostgres) *applicationusecases.AuthService {
+	return &applicationusecases.AuthService{
 		Logger: c.logger,
 		Hasher: c.hasher,
 		UoW:    uow,

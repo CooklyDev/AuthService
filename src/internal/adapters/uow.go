@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/CooklyDev/AuthService/internal/application"
 	"github.com/CooklyDev/AuthService/internal/domain"
-	"github.com/CooklyDev/AuthService/internal/usecases"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -13,8 +13,8 @@ type UnitOfWorkPostgres struct {
 	pool        *pgxpool.Pool
 	tx          DBTX
 	logger      domain.Logger
-	userRepo    usecases.UserRepo
-	sessionRepo usecases.SessionRepo
+	userRepo    application.UserRepo
+	sessionRepo application.SessionRepo
 }
 
 func NewUnitOfWorkPostgres(pool *pgxpool.Pool, logger domain.Logger) *UnitOfWorkPostgres {
@@ -104,11 +104,11 @@ func (u *UnitOfWorkPostgres) Rollback() error {
 	return nil
 }
 
-func (u *UnitOfWorkPostgres) UserRepository() usecases.UserRepo {
+func (u *UnitOfWorkPostgres) UserRepository() application.UserRepo {
 	return u.userRepo
 }
 
-func (u *UnitOfWorkPostgres) SessionRepository() usecases.SessionRepo {
+func (u *UnitOfWorkPostgres) SessionRepository() application.SessionRepo {
 	return u.sessionRepo
 }
 
