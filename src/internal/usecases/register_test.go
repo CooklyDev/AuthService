@@ -9,15 +9,13 @@ import (
 
 func TestRegisterSuccess(t *testing.T) {
 	// Arrange
-	repo := &userRepoStub{}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
-	uow := &uowStub{}
+	uow := newUoWStub()
 	service := AuthService{
-		userRepo: repo,
-		logger:   logger,
-		hasher:   hasher,
-		uow:      uow,
+		Logger: logger,
+		Hasher: hasher,
+		UoW:    uow,
 	}
 
 	// Act
@@ -31,17 +29,14 @@ func TestRegisterSuccess(t *testing.T) {
 
 func TestRegisterReturnsErrorWhenEmailAlreadyExists(t *testing.T) {
 	// Arrange
-	repo := &userRepoStub{
-		user: &domain.User{Email: "alice@example.com"},
-	}
+	uow := newUoWStub()
+	uow.userRepo.user = &domain.User{Email: "alice@example.com"}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
-	uow := &uowStub{}
 	service := AuthService{
-		userRepo: repo,
-		logger:   logger,
-		hasher:   hasher,
-		uow:      uow,
+		Logger: logger,
+		Hasher: hasher,
+		UoW:    uow,
 	}
 
 	// Act

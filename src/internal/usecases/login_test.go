@@ -11,23 +11,18 @@ import (
 func TestLoginSuccess(t *testing.T) {
 	// Arrange
 	userID := uuid.New()
-	repo := &userRepoStub{
-		user: &domain.User{
-			ID:             userID,
-			Email:          "alice@example.com",
-			HashedPassword: "hashed-password",
-		},
+	uow := newUoWStub()
+	uow.userRepo.user = &domain.User{
+		ID:             userID,
+		Email:          "alice@example.com",
+		HashedPassword: "hashed-password",
 	}
-	sessionRepo := &sessionRepoStub{}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
-	uow := &uowStub{}
 	service := AuthService{
-		userRepo:    repo,
-		sessionRepo: sessionRepo,
-		logger:      logger,
-		hasher:      hasher,
-		uow:         uow,
+		Logger: logger,
+		Hasher: hasher,
+		UoW:    uow,
 	}
 
 	// Act
@@ -47,17 +42,13 @@ func TestLoginSuccess(t *testing.T) {
 
 func TestLoginReturnsErrorWhenUserDoesNotExist(t *testing.T) {
 	// Arrange
-	repo := &userRepoStub{}
-	sessionRepo := &sessionRepoStub{}
+	uow := newUoWStub()
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
-	uow := &uowStub{}
 	service := AuthService{
-		userRepo:    repo,
-		sessionRepo: sessionRepo,
-		logger:      logger,
-		hasher:      hasher,
-		uow:         uow,
+		Logger: logger,
+		Hasher: hasher,
+		UoW:    uow,
 	}
 
 	// Act
@@ -74,23 +65,18 @@ func TestLoginReturnsErrorWhenUserDoesNotExist(t *testing.T) {
 
 func TestLoginReturnsErrorWhenPasswordIsInvalid(t *testing.T) {
 	// Arrange
-	repo := &userRepoStub{
-		user: &domain.User{
-			ID:             uuid.New(),
-			Email:          "alice@example.com",
-			HashedPassword: "hashed-secret",
-		},
+	uow := newUoWStub()
+	uow.userRepo.user = &domain.User{
+		ID:             uuid.New(),
+		Email:          "alice@example.com",
+		HashedPassword: "hashed-secret",
 	}
-	sessionRepo := &sessionRepoStub{}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
-	uow := &uowStub{}
 	service := AuthService{
-		userRepo:    repo,
-		sessionRepo: sessionRepo,
-		logger:      logger,
-		hasher:      hasher,
-		uow:         uow,
+		Logger: logger,
+		Hasher: hasher,
+		UoW:    uow,
 	}
 
 	// Act

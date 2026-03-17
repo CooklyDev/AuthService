@@ -6,6 +6,9 @@ type PasswordHasher interface {
 }
 
 type UnitOfWork interface {
+	Begin() error
 	Commit() error
 	Rollback() error
+	UserRepository() UserRepo
+	SessionRepository() SessionRepo
 }

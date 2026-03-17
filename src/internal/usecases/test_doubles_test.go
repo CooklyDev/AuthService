@@ -44,7 +44,21 @@ func (stub *loggerStub) Warn(string) {}
 
 func (stub *loggerStub) Error(string) {}
 
-type uowStub struct{}
+type uowStub struct {
+	userRepo    *userRepoStub
+	sessionRepo *sessionRepoStub
+}
+
+func newUoWStub() *uowStub {
+	return &uowStub{
+		userRepo:    &userRepoStub{},
+		sessionRepo: &sessionRepoStub{},
+	}
+}
+
+func (stub *uowStub) Begin() error {
+	return nil
+}
 
 func (stub *uowStub) Commit() error {
 	return nil
@@ -52,4 +66,12 @@ func (stub *uowStub) Commit() error {
 
 func (stub *uowStub) Rollback() error {
 	return nil
+}
+
+func (stub *uowStub) UserRepository() UserRepo {
+	return stub.userRepo
+}
+
+func (stub *uowStub) SessionRepository() SessionRepo {
+	return stub.sessionRepo
 }

@@ -9,17 +9,33 @@ import (
 )
 
 type AuthService struct {
-	userRepo    UserRepo
-	sessionRepo SessionRepo
-	logger      domain.Logger
-	hasher      PasswordHasher
-	uow         UnitOfWork
+	Logger domain.Logger
+	Hasher PasswordHasher
+	UoW    UnitOfWork
 }
 
 func (service AuthService) Register(username string, email string, password string) error {
 	maskedEmail := domain.MaskEmail(email)
 
-	service.logger.Info(
+	if err := service.UoW.Begin(); err != nil {
+		return err
+	}
+
+	defer func() {
+		rollbackErr := service.UoW.Rollback()
+		if rollbackErr != nil {
+			service.Logger.Debug(
+				fmt.Sprintf(
+					"register rollback skipped or failed: username=%s email=%s error=%s",
+					username,
+					maskedEmail,
+					rollbackErr.Error(),
+				),
+			)
+		}
+	}()
+
+	service.Logger.Info(
 		fmt.Sprintf(
 			"register started: username=%s email=%s",
 			username,
@@ -28,7 +44,7 @@ func (service AuthService) Register(username string, email string, password stri
 	)
 
 	if !(domain.ValidatePassword(password)) {
-		service.logger.Warn(
+		service.Logger.Warn(
 			fmt.Sprintf(
 				"register failed: invalid password: username=%s email=%s",
 				username,
@@ -39,9 +55,9 @@ func (service AuthService) Register(username string, email string, password stri
 		return errors.New("invalid password")
 	}
 
-	hashedPassword, err := service.hasher.Hash(password)
+	hashedPassword, err := service.Hasher.Hash(password)
 	if err != nil {
-		service.logger.Error(
+		service.Logger.Error(
 			fmt.Sprintf(
 				"register failed: password hashing: username=%s email=%s error=%s",
 				username,
@@ -53,9 +69,10 @@ func (service AuthService) Register(username string, email string, password stri
 		return err
 	}
 
-	oldUser, err := service.userRepo.GetByEmail(email)
+	userRepo := service.UoW.UserRepository()
+	oldUser, err := userRepo.GetByEmail(email)
 	if err != nil {
-		service.logger.Error(
+		service.Logger.Error(
 			fmt.Sprintf(
 				"register failed: get user by email: username=%s email=%s error=%s",
 				username,
@@ -67,7 +84,7 @@ func (service AuthService) Register(username string, email string, password stri
 		return err
 	}
 	if oldUser != nil {
-		service.logger.Warn(
+		service.Logger.Warn(
 			fmt.Sprintf(
 				"register failed: email already exists: username=%s email=%s",
 				username,
@@ -80,7 +97,7 @@ func (service AuthService) Register(username string, email string, password stri
 
 	user, err := domain.NewUser(uuid.New(), username, email, hashedPassword)
 	if err != nil {
-		service.logger.Warn(
+		service.Logger.Warn(
 			fmt.Sprintf(
 				"register failed: invalid user data: username=%s email=%s error=%s",
 				username,
@@ -92,9 +109,9 @@ func (service AuthService) Register(username string, email string, password stri
 		return err
 	}
 
-	err = service.userRepo.Add(user)
+	err = userRepo.Add(user)
 	if err != nil {
-		service.logger.Error(
+		service.Logger.Error(
 			fmt.Sprintf(
 				"register failed: add user: username=%s email=%s error=%s",
 				username,
@@ -106,9 +123,9 @@ func (service AuthService) Register(username string, email string, password stri
 		return err
 	}
 
-	err = service.uow.Commit()
+	err = service.UoW.Commit()
 	if err != nil {
-		service.logger.Error(
+		service.Logger.Error(
 			fmt.Sprintf(
 				"register failed: commit transaction: username=%s email=%s error=%s",
 				username,
@@ -119,7 +136,7 @@ func (service AuthService) Register(username string, email string, password stri
 		return err
 	}
 
-	service.logger.Info(
+	service.Logger.Info(
 		fmt.Sprintf(
 			"register completed: user_id=%s username=%s email=%s",
 			user.ID,
