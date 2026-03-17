@@ -19,7 +19,7 @@ func TestRegisterSuccess(t *testing.T) {
 	}
 
 	// Act
-	err := service.Register("alice", "alice@example.com", "password")
+	err := service.Register("alice", "alice@example.com", "password1")
 
 	// Assert
 	if err != nil {
@@ -40,7 +40,7 @@ func TestRegisterReturnsErrorWhenEmailAlreadyExists(t *testing.T) {
 	}
 
 	// Act
-	err := service.Register("alice", "alice@example.com", "password")
+	err := service.Register("alice", "alice@example.com", "password1")
 
 	// Assert
 	if err == nil {

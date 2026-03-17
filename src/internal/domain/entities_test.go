@@ -1,10 +1,60 @@
 package domain
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 )
+
+func TestValidatePassword(t *testing.T) {
+	tests := []struct {
+		name     string
+		password string
+		expected bool
+	}{
+		{
+			name:     "returns false when password is shorter than minimum length",
+			password: "a1b",
+			expected: false,
+		},
+		{
+			name:     "returns false when password is longer than maximum length",
+			password: strings.Repeat("a", 100) + "1",
+			expected: false,
+		},
+		{
+			name:     "returns false when password has no digits",
+			password: "abcde",
+			expected: false,
+		},
+		{
+			name:     "returns false when password has no letters",
+			password: "12345",
+			expected: false,
+		},
+		{
+			name:     "returns true when password has letters and digits within valid length",
+			password: "abc12",
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			// Arrange
+			password := test.password
+
+			// Act
+			actual := ValidatePassword(password)
+
+			// Assert
+			if actual != test.expected {
+				t.Fatalf("expected %v, got %v for password %q", test.expected, actual, password)
+			}
+		})
+	}
+}
 
 func TestNewUserSuccess(t *testing.T) {
 	// Arrange

@@ -19,8 +19,24 @@ type Session struct {
 	UserID uuid.UUID
 }
 
-func ValidatePassword(_ string) bool { // TODO: Implement validation
-	return true
+func ValidatePassword(password string) bool { // TODO: Implement validation
+	if len(password) < 5 || len(password) > 100 {
+		return false
+	}
+
+	hasDigit := false
+	hasLetter := false
+
+	for _, ch := range password {
+		if ch >= '0' && ch <= '9' {
+			hasDigit = true
+		}
+		if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') {
+			hasLetter = true
+		}
+	}
+
+	return hasDigit && hasLetter
 }
 
 func NewUser(id uuid.UUID, username string, email string, password string) (*User, error) {
