@@ -45,7 +45,7 @@ func (c *Container) Close() {
 	c.logger.Info("postgres pool closed: dependency=postgres")
 }
 
-func (c *Container) _() (*usecases.AuthService, error) {
+func (c *Container) GetAuthService() (*usecases.AuthService, error) {
 	if c.postgresPool == nil {
 		err := errors.New("postgres pool is not initialized")
 		c.logger.Error(
