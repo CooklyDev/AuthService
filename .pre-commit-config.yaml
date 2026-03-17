@@ -12,3 +12,9 @@ repos:
         language: system
         pass_filenames: false
         files: ^src/.*\.go$
+      - id: go-test
+        name: go test
+        entry: bash -c 'cd src && go test ./...'
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.go$
