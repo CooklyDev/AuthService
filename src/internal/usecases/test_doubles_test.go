@@ -43,3 +43,13 @@ func (stub *loggerStub) Info(string) {}
 func (stub *loggerStub) Warn(string) {}
 
 func (stub *loggerStub) Error(string) {}
+
+type uowStub struct{}
+
+func (stub *uowStub) Commit() error {
+	return nil
+}
+
+func (stub *uowStub) Rollback() error {
+	return nil
+}

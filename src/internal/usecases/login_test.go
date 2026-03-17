@@ -21,11 +21,13 @@ func TestLoginSuccess(t *testing.T) {
 	sessionRepo := &sessionRepoStub{}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
+	uow := &uowStub{}
 	service := AuthService{
 		userRepo:    repo,
 		sessionRepo: sessionRepo,
 		logger:      logger,
 		hasher:      hasher,
+		uow:         uow,
 	}
 
 	// Act
@@ -49,11 +51,13 @@ func TestLoginReturnsErrorWhenUserDoesNotExist(t *testing.T) {
 	sessionRepo := &sessionRepoStub{}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
+	uow := &uowStub{}
 	service := AuthService{
 		userRepo:    repo,
 		sessionRepo: sessionRepo,
 		logger:      logger,
 		hasher:      hasher,
+		uow:         uow,
 	}
 
 	// Act
@@ -80,11 +84,13 @@ func TestLoginReturnsErrorWhenPasswordIsInvalid(t *testing.T) {
 	sessionRepo := &sessionRepoStub{}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
+	uow := &uowStub{}
 	service := AuthService{
 		userRepo:    repo,
 		sessionRepo: sessionRepo,
 		logger:      logger,
 		hasher:      hasher,
+		uow:         uow,
 	}
 
 	// Act

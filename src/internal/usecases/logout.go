@@ -22,6 +22,18 @@ func (service AuthService) Logout(sessionID string) error {
 		return err
 	}
 
+	err = service.uow.Commit()
+	if err != nil {
+		service.logger.Error(
+			fmt.Sprintf(
+				"logout failed: commit transaction: error=%s",
+				err.Error(),
+			),
+		)
+
+		return err
+	}
+
 	service.logger.Info("logout completed")
 
 	return nil

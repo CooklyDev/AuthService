@@ -13,6 +13,7 @@ type AuthService struct {
 	sessionRepo SessionRepo
 	logger      domain.Logger
 	hasher      PasswordHasher
+	uow         UnitOfWork
 }
 
 func (service AuthService) Register(username string, email string, password string) error {
@@ -102,6 +103,19 @@ func (service AuthService) Register(username string, email string, password stri
 			),
 		)
 
+		return err
+	}
+
+	err = service.uow.Commit()
+	if err != nil {
+		service.logger.Error(
+			fmt.Sprintf(
+				"register failed: commit transaction: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
 		return err
 	}
 

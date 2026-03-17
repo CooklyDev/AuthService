@@ -12,10 +12,12 @@ func TestRegisterSuccess(t *testing.T) {
 	repo := &userRepoStub{}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
+	uow := &uowStub{}
 	service := AuthService{
 		userRepo: repo,
 		logger:   logger,
 		hasher:   hasher,
+		uow:      uow,
 	}
 
 	// Act
@@ -34,10 +36,12 @@ func TestRegisterReturnsErrorWhenEmailAlreadyExists(t *testing.T) {
 	}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
+	uow := &uowStub{}
 	service := AuthService{
 		userRepo: repo,
 		logger:   logger,
 		hasher:   hasher,
+		uow:      uow,
 	}
 
 	// Act

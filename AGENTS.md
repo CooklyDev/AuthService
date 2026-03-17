@@ -126,6 +126,8 @@ Examples:
 - HTTP adapters
 - external service clients
 
+Adapters must not implement business logic or any behavior outside the contract defined by the interface they satisfy.
+
 
 Frameworks
 External delivery mechanisms.

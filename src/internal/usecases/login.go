@@ -93,6 +93,20 @@ func (service AuthService) Login(email string, password string) (*domain.Session
 		return nil, err
 	}
 
+	err = service.uow.Commit()
+	if err != nil {
+		service.logger.Error(
+			fmt.Sprintf(
+				"login failed: commit transaction: user_id=%s email=%s error=%s",
+				user.ID,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
+	}
+
 	service.logger.Info(
 		fmt.Sprintf(
 			"login completed: user_id=%s email=%s",

@@ -4,3 +4,8 @@ type PasswordHasher interface {
 	Hash(password string) (string, error)
 	Compare(password string, hashedPassword string) (bool, error)
 }
+
+type UnitOfWork interface {
+	Commit() error
+	Rollback() error
+}

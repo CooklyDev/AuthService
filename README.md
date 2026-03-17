@@ -32,9 +32,16 @@ Supported operations:
 
 * **Registration**
 * **Login**
+* **Logout**
 
 User data stored by the service:
 
 * `id`
 * `username`
 * `email`
+
+---
+
+## TODO
+
+* implement password validation rules in `ValidatePassword`
