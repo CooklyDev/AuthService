@@ -1,19 +1,53 @@
 package internal
 
-import "github.com/CooklyDev/AuthService/internal/domain"
+import (
+	"fmt"
+	"io"
+	"os"
+	"time"
 
-type NoopLogger struct{}
+	"github.com/CooklyDev/AuthService/internal/domain"
+)
 
-var _ domain.Logger = (*NoopLogger)(nil)
+const (
+	colorReset  = "\033[0m"
+	colorCyan   = "\033[36m"
+	colorGreen  = "\033[32m"
+	colorYellow = "\033[33m"
+	colorRed    = "\033[31m"
+)
 
-func NewNoopLogger() *NoopLogger {
-	return &NoopLogger{}
+type ConsoleLogger struct {
+	out io.Writer
 }
 
-func (logger *NoopLogger) Debug(string) {}
+var _ domain.Logger = (*ConsoleLogger)(nil)
 
-func (logger *NoopLogger) Info(string) {}
+// NewConsoleLogger returns a logger that writes to stderr, which is the
+// conventional destination for log output to avoid mixing with program output.
+func NewConsoleLogger() *ConsoleLogger {
+	return &ConsoleLogger{out: os.Stderr}
+}
 
-func (logger *NoopLogger) Warn(string) {}
+func (l *ConsoleLogger) log(level, color, msg string) {
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	if _, err := fmt.Fprintf(l.out, "%s%s [%-5s]%s %s\n", color, timestamp, level, colorReset, msg); err != nil {
+		return
+	}
+}
 
-func (logger *NoopLogger) Error(string) {}
+func (l *ConsoleLogger) Debug(msg string) {
+	l.log("DEBUG", colorCyan, msg)
+}
+
+func (l *ConsoleLogger) Info(msg string) {
+	l.log("INFO", colorGreen, msg)
+}
+
+func (l *ConsoleLogger) Warn(msg string) {
+	l.log("WARN", colorYellow, msg)
+}
+
+func (l *ConsoleLogger) Error(msg string) {
+	l.log("ERROR", colorRed, msg)
+}
