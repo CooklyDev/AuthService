@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (service AuthService) Login(email string, password string) (*domain.Session, error) {
+func (service AuthService) Login(email string, password string) (*uuid.UUID, error) {
 	maskedEmail := domain.MaskEmail(email)
 
 	if err := service.UoW.Begin(); err != nil {
@@ -133,5 +133,5 @@ func (service AuthService) Login(email string, password string) (*domain.Session
 		),
 	)
 
-	return session, nil
+	return &session.ID, nil
 }

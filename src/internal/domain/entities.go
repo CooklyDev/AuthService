@@ -18,7 +18,7 @@ type Session struct {
 	UserID uuid.UUID
 }
 
-func ValidatePassword(password string) bool { // TODO: Implement validation
+func ValidatePassword(password string) bool {
 	if len(password) < 5 || len(password) > 100 {
 		return false
 	}

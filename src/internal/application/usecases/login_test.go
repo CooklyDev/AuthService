@@ -26,17 +26,14 @@ func TestLoginSuccess(t *testing.T) {
 	}
 
 	// Act
-	session, err := service.Login("alice@example.com", "password")
+	sessionId, err := service.Login("alice@example.com", "password")
 
 	// Assert
 	if err != nil {
 		t.Fatalf("expected nil error, got %v", err)
 	}
-	if session == nil {
-		t.Fatal("expected session, got nil")
-	}
-	if session.UserID != userID {
-		t.Fatalf("expected user id %s, got %s", userID, session.UserID)
+	if sessionId == nil {
+		t.Fatal("expected session ID, got nil")
 	}
 }
 

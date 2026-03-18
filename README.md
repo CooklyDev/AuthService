@@ -22,26 +22,6 @@ The service maintains basic user identity information and provides authenticatio
 
 ---
 
-## Current Scope (Roadmap Stage: Base)
-
-The following functionality is implemented in the current stage.
-
-### User Account
-
-Supported operations:
-
-* **Registration**
-* **Login**
-* **Logout**
-
-User data stored by the service:
-
-* `id`
-* `username`
-* `email`
-
----
-
 ## Local Run
 
 1. Create a local environment file:
