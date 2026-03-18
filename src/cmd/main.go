@@ -31,8 +31,10 @@ func main() {
 	defer container.Close()
 
 	router := gin.Default()
-	router.Use(presentation.GetContainer(container))
-	router.GET("/", presentation.Hello)
+	v1 := router.Group("/api/v1")
+	v1.Use(presentation.GetContainer(container))
+
+	// v1.POST("/register", presentation.Register)
 
 	if err := router.Run(); err != nil {
 		panic(err)
