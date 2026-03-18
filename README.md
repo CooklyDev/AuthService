@@ -31,6 +31,8 @@ The service maintains basic user identity information and provides authenticatio
 cp .example.env .env
 ```
 
+`APP_PORT` controls the HTTP port for the Auth Service. The default value is `8080`.
+
 2. Start PostgreSQL only:
 
 ```bash
@@ -59,7 +61,7 @@ go run ./cmd
 6. Check that the service is reachable:
 
 ```bash
-curl http://localhost:8080/
+curl http://localhost:${APP_PORT}/
 ```
 
 The current local entrypoint uses `ConsoleLogger` and bcrypt password hashing.
@@ -83,7 +85,7 @@ docker compose up --build
 3. Check that the service is reachable:
 
 ```bash
-curl http://localhost:8080/
+curl http://localhost:${APP_PORT:-8080}/
 ```
 
 4. Stop the stack:
@@ -134,5 +136,5 @@ swag init -g cmd/main.go -o docs
 2. Access the Swagger UI at:
 
 ```text
-http://localhost:8080/swagger/index.html
+http://localhost:${APP_PORT:-8080}/swagger/index.html
 ```
