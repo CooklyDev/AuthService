@@ -82,6 +82,23 @@ The current local entrypoint uses temporary stubs for the logger and password ha
 
 ---
 
+## Swagger Generation
+
+1. Generate OpenAPI files:
+
+```bash
+cd src
+swag init -g cmd/main.go -o docs
+```
+
+2. Access the Swagger UI at:
+
+```text
+http://localhost:8080/swagger/index.html
+```
+
+---
+
 ## TODO
 
 * replace temporary stubs in `src/internal/logger.go` and `src/internal/adapters/hasher.go` with real implementations during application wiring
