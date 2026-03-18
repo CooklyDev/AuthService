@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 
 	"github.com/CooklyDev/AuthService/internal"
 	"github.com/CooklyDev/AuthService/internal/adapters"
@@ -31,6 +32,16 @@ func initContainer() *internal.Container {
 	return container
 }
 
+func resolveAddress() string {
+	port, exists := internal.LookupEnvOptional("APP_PORT")
+	port = strings.TrimSpace(port)
+	if !exists || strings.TrimSpace(port) == "" {
+		return ":8080"
+	}
+
+	return ":" + strings.TrimPrefix(port, ":")
+}
+
 // @title Cookly Auth Service API
 // @version 1.0
 // @description REST API for user registration and login in Cookly Auth Service.
@@ -43,6 +54,7 @@ func main() {
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/health", presentation.Health)
 
 	v1.Use(presentation.GetContainer(container))
 
@@ -50,7 +62,9 @@ func main() {
 	v1.POST("/login", presentation.Login)
 	v1.POST("/logout", presentation.Logout)
 
-	if err := router.Run(); err != nil {
+	address := resolveAddress()
+
+	if err := router.Run(address); err != nil {
 		panic(err)
 	}
 }

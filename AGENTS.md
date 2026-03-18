@@ -69,12 +69,29 @@ The service should not handle:
 
 # Minimum Domain Model
 
-User entity must contain only:
+Current auth domain model:
+
+User entity:
 
 - id
 - username
+
+AuthIdentity entity:
+
+- id
+- user_id
+- provider
+- provider_id
 - email
-- password
+- password_hash
+
+Session entity:
+
+- id
+- user_id
+
+Only local provider authentication is currently in scope.
+Do not add OAuth providers or extra identity/profile fields.
 
 
 
@@ -85,11 +102,8 @@ User entity must contain only:
 Backend:
 - Go
 
-Database:
+Database / session storage:
 - PostgreSQL
-
-Cache / session storage:
-- Redis
 
 
 ---------------------------------------------------------------------
@@ -219,6 +233,8 @@ Prefer the following commands:
 - unit tests: `cd src && go test ./...`
 - linter: `cd src && golangci-lint run -c ../.golangci.yml ./...`
 - pre-commit full check: `pre-commit run --all-files`
+- full local stack: `docker compose up --build`
+- migrations: `docker compose run --rm migrate`
 
 Do not replace these commands with alternative tools unless explicitly requested.
 
@@ -243,7 +259,7 @@ Log only useful operational context:
 - operation name such as `register`, `login`, `logout`
 - `user_id` when available
 - masked `email` when needed
-- dependency name such as `postgres` or `redis`
+- dependency name such as `postgres`
 - request correlation identifiers when available
 - sanitized error details
 
@@ -329,6 +345,7 @@ When generating code for this service:
 - stay strictly within the roadmap scope
 - do not add new features
 - do not expand the domain model
+- keep authentication limited to local provider only
 - follow Clean Architecture layering
 - produce minimal, readable implementations
 - focus on working MVP functionality

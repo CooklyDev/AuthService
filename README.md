@@ -16,6 +16,7 @@ Auth Service is responsible for:
 
 * user registration
 * user login
+* user logout
 * storing user account data
 
 The service maintains basic user identity information and provides authentication capabilities for the platform.
@@ -30,33 +31,18 @@ The service maintains basic user identity information and provides authenticatio
 cp .example.env .env
 ```
 
-2. Start PostgreSQL in Docker:
+`APP_PORT` controls the HTTP port for the Auth Service. The default value is `8080`.
+
+2. Start PostgreSQL only:
 
 ```bash
-docker run -d \
-  --name auth-postgres \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=auth_service \
-  -p 5432:5432 \
-  postgres:16
+docker compose up -d postgres
 ```
 
-3. Initialize the required tables:
+3. Apply migrations:
 
 ```bash
-docker exec -i auth-postgres psql -U postgres -d auth_service -c "
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY,
-  username TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
-  hashed_password TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS sessions (
-  id UUID PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
-);
-"
+docker compose run --rm migrate
 ```
 
 4. Load environment variables in the current shell from `src`:
@@ -75,10 +61,66 @@ go run ./cmd
 6. Check that the service is reachable:
 
 ```bash
-curl http://localhost:8080/
+curl http://localhost:${APP_PORT}/
 ```
 
-The current local entrypoint uses temporary stubs for the logger and password hasher.
+The current local entrypoint uses `ConsoleLogger` and bcrypt password hashing.
+
+---
+
+## Docker Compose
+
+1. Create a local environment file:
+
+```bash
+cp .example.env .env
+```
+
+2. Start PostgreSQL, run migrations, and start Auth Service:
+
+```bash
+docker compose up --build
+```
+
+3. Check that the service is reachable:
+
+```bash
+curl http://localhost:${APP_PORT:-8080}/
+```
+
+4. Stop the stack:
+
+```bash
+docker compose down
+```
+
+If you need to remove the PostgreSQL volume too:
+
+```bash
+docker compose down -v
+```
+
+---
+
+## Migrations
+
+Apply migrations:
+
+```bash
+docker compose run --rm migrate
+```
+
+Check migration status:
+
+```bash
+docker compose run --rm migrate status
+```
+
+Rollback the last migration:
+
+```bash
+docker compose run --rm migrate down
+```
 
 ---
 
@@ -94,11 +136,5 @@ swag init -g cmd/main.go -o docs
 2. Access the Swagger UI at:
 
 ```text
-http://localhost:8080/swagger/index.html
+http://localhost:${APP_PORT:-8080}/swagger/index.html
 ```
-
----
-
-## TODO
-
-* replace temporary stubs in `src/internal/logger.go` and `src/internal/adapters/hasher.go` with real implementations during application wiring
