@@ -17,7 +17,7 @@ import (
 
 func initContainer() *internal.Container {
 	// Initialize the container and its dependencies
-	logger := internal.NewNoopLogger()
+	logger := internal.NewConsoleLogger()
 	hasher := adapters.NewStubHasher()
 
 	container, err := internal.NewContainer(
