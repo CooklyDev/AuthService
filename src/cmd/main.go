@@ -34,7 +34,8 @@ func main() {
 	v1 := router.Group("/api/v1")
 	v1.Use(presentation.GetContainer(container))
 
-	// v1.POST("/register", presentation.Register)
+	v1.POST("/register", presentation.Register)
+	v1.POST("/login", presentation.Login)
 
 	if err := router.Run(); err != nil {
 		panic(err)

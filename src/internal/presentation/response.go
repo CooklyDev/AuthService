@@ -1,8 +1,11 @@
 package presentation
 
 import (
+	"errors"
 	"net/http"
 
+	"github.com/CooklyDev/AuthService/internal/adapters"
+	"github.com/CooklyDev/AuthService/internal/domain"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,11 +27,7 @@ func Ok(c *gin.Context, data interface{}) {
 	})
 }
 
-func Fail(c *gin.Context, code string, message string) {
-	FailWithStatus(c, http.StatusBadRequest, code, message)
-}
-
-func FailWithStatus(c *gin.Context, status int, code string, message string) {
+func Fail(c *gin.Context, status int, code string, message string) {
 	c.JSON(status, Response{
 		Success: false,
 		Error: &ErrorInfo{
@@ -36,4 +35,22 @@ func FailWithStatus(c *gin.Context, status int, code string, message string) {
 			Message: message,
 		},
 	})
+}
+
+func FailServerError(c *gin.Context) {
+	Fail(c, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "internal server error")
+}
+
+func MapAppError(err error) (int, string, string) {
+	// Map application errors to HTTP status codes and error messages
+	if errors.Is(err, domain.ErrBusinessRule) {
+		return http.StatusBadRequest, "BUSINESS_RULE_VIOLATION", err.Error()
+	}
+
+	if errors.Is(err, adapters.ErrAdapter) {
+		return http.StatusInternalServerError, "ADAPTER_ERROR", err.Error()
+	}
+
+	// Default to internal server error for unrecognized errors
+	return http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "internal server error"
 }

@@ -104,5 +104,4 @@ The current local entrypoint uses temporary stubs for the logger and password ha
 
 ## TODO
 
-* implement password validation rules in `ValidatePassword`
 * replace temporary stubs in `src/internal/logger.go` and `src/internal/adapters/hasher.go` with real implementations during application wiring

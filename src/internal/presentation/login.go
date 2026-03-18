@@ -2,8 +2,7 @@ package presentation
 
 import "github.com/gin-gonic/gin"
 
-func Register(c *gin.Context) {
-	username := c.PostForm("username")
+func Login(c *gin.Context) {
 	email := c.PostForm("email")
 	password := c.PostForm("password")
 
@@ -13,11 +12,12 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	if err := authService.Register(username, email, password); err != nil {
+	session, err := authService.Login(email, password)
+	if err != nil {
 		status, code, message := MapAppError(err)
 		Fail(c, status, code, message)
 		return
 	}
 
-	Ok(c, nil)
+	Ok(c, session)
 }
