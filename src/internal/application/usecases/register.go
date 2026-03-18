@@ -1,7 +1,6 @@
 package usecases
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/CooklyDev/AuthService/internal/application"
@@ -53,7 +52,7 @@ func (service AuthService) Register(username string, email string, password stri
 			),
 		)
 
-		return errors.New("invalid password")
+		return domain.NewBusinessRuleError("invalid password")
 	}
 
 	hashedPassword, err := service.Hasher.Hash(password)
@@ -93,7 +92,7 @@ func (service AuthService) Register(username string, email string, password stri
 			),
 		)
 
-		return errors.New("invalid email: user with such email already exists")
+		return domain.NewBusinessRuleError("invalid email: user with such email already exists")
 	}
 
 	user, err := domain.NewUser(uuid.New(), username, email, hashedPassword)
