@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"strings"
+	"errors"
 	"testing"
 
 	"github.com/CooklyDev/AuthService/internal/domain"
@@ -55,10 +55,7 @@ func TestLoginReturnsErrorWhenUserDoesNotExist(t *testing.T) {
 	_, err := service.Login("alice@example.com", "password")
 
 	// Assert
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !strings.Contains(err.Error(), "invalid credentials") {
+	if !errors.Is(err, domain.ErrBusinessRule) {
 		t.Fatalf("expected invalid credentials error, got %v", err)
 	}
 }
@@ -83,10 +80,7 @@ func TestLoginReturnsErrorWhenPasswordIsInvalid(t *testing.T) {
 	_, err := service.Login("alice@example.com", "password")
 
 	// Assert
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !strings.Contains(err.Error(), "invalid credentials") {
+	if !errors.Is(err, domain.ErrBusinessRule) {
 		t.Fatalf("expected invalid credentials error, got %v", err)
 	}
 }

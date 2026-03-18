@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"strings"
+	"errors"
 	"testing"
 
 	"github.com/CooklyDev/AuthService/internal/domain"
@@ -43,10 +43,7 @@ func TestRegisterReturnsErrorWhenEmailAlreadyExists(t *testing.T) {
 	err := service.Register("alice", "alice@example.com", "password1")
 
 	// Assert
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !strings.Contains(err.Error(), "invalid email") {
+	if !errors.Is(err, domain.ErrBusinessRule) {
 		t.Fatalf("expected duplicate email error, got %v", err)
 	}
 }

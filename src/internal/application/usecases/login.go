@@ -1,7 +1,6 @@
 package usecases
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/CooklyDev/AuthService/internal/domain"
@@ -56,7 +55,7 @@ func (service AuthService) Login(email string, password string) (*domain.Session
 			),
 		)
 
-		return nil, errors.New("invalid credentials")
+		return nil, domain.NewBusinessRuleError("invalid credentials")
 	}
 
 	passwordMatches, err := service.Hasher.Compare(password, user.HashedPassword)
@@ -80,7 +79,7 @@ func (service AuthService) Login(email string, password string) (*domain.Session
 			),
 		)
 
-		return nil, errors.New("invalid credentials")
+		return nil, domain.NewBusinessRuleError("invalid credentials")
 	}
 
 	session, err := domain.NewSession(uuid.New(), user.ID)
