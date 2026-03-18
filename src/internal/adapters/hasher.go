@@ -1,19 +1,24 @@
 package adapters
 
-import "github.com/CooklyDev/AuthService/internal/application"
+import (
+	"github.com/CooklyDev/AuthService/internal/application"
+	"golang.org/x/crypto/bcrypt"
+)
 
-type StubHasher struct{}
+type BcryptHasher struct{}
 
-var _ application.PasswordHasher = (*StubHasher)(nil)
+var _ application.PasswordHasher = (*BcryptHasher)(nil)
 
-func NewStubHasher() *StubHasher {
-	return &StubHasher{}
+func NewBcryptHasher() *BcryptHasher {
+	return &BcryptHasher{}
 }
 
-func (hasher *StubHasher) Hash(password string) (string, error) {
-	return "hashed-" + password, nil
+func (hasher *BcryptHasher) Hash(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
 }
 
-func (hasher *StubHasher) Compare(password string, hashedPassword string) (bool, error) {
-	return "hashed-"+password == hashedPassword, nil
+func (hasher *BcryptHasher) Compare(password string, hashedPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil, nil
 }

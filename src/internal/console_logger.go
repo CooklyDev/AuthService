@@ -31,7 +31,9 @@ func NewConsoleLogger() *ConsoleLogger {
 
 func (l *ConsoleLogger) log(level, color, msg string) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Fprintf(l.out, "%s%s [%-5s]%s %s\n", color, timestamp, level, colorReset, msg)
+	if _, err := fmt.Fprintf(l.out, "%s%s [%-5s]%s %s\n", color, timestamp, level, colorReset, msg); err != nil {
+		return
+	}
 }
 
 func (l *ConsoleLogger) Debug(msg string) {

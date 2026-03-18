@@ -18,7 +18,7 @@ import (
 func initContainer() *internal.Container {
 	// Initialize the container and its dependencies
 	logger := internal.NewConsoleLogger()
-	hasher := adapters.NewStubHasher()
+	hasher := adapters.NewBcryptHasher()
 
 	container, err := internal.NewContainer(
 		logger,
