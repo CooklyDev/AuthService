@@ -48,6 +48,7 @@ func main() {
 
 	v1.POST("/register", presentation.Register)
 	v1.POST("/login", presentation.Login)
+	v1.POST("/logout", presentation.Logout)
 
 	if err := router.Run(); err != nil {
 		panic(err)
