@@ -7,10 +7,23 @@ import (
 )
 
 type User struct {
-	ID             uuid.UUID
-	Username       string
-	Email          string
-	HashedPassword string
+	ID       uuid.UUID
+	Username string
+}
+
+type Provider int
+
+const (
+	ProviderLocal Provider = iota
+)
+
+type AuthIdentity struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	Provider     Provider
+	ProviderID   string // for oauth providers only
+	Email        string // for password provider only
+	PasswordHash string // for password provider only
 }
 
 type Session struct {
@@ -38,22 +51,55 @@ func ValidatePassword(password string) bool {
 	return hasDigit && hasLetter
 }
 
-func NewUser(id uuid.UUID, username string, email string, password string) (*User, error) {
-	username = strings.TrimSpace(username)
-	email = strings.TrimSpace(email)
+func NormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
 
+func NewUser(id uuid.UUID, username string) (*User, error) {
+	username = strings.TrimSpace(username)
+
+	if id == uuid.Nil {
+		return nil, NewBusinessRuleError("invalid argument: user id is required")
+	}
 	if username == "" {
 		return nil, NewBusinessRuleError("invalid argument: username is required")
 	}
-	if email == "" {
-		return nil, NewBusinessRuleError("invalid argument: email is required")
-	}
 
 	return &User{
-		ID:             id,
-		Username:       username,
-		Email:          email,
-		HashedPassword: password,
+		ID:       id,
+		Username: username,
+	}, nil
+}
+
+func NewAuthIdentity(id uuid.UUID, userID uuid.UUID, provider Provider, providerID string, email string, passwordHash string) (*AuthIdentity, error) {
+	if id == uuid.Nil {
+		return nil, NewBusinessRuleError("invalid argument: auth identity id is required")
+	}
+	if userID == uuid.Nil {
+		return nil, NewBusinessRuleError("invalid argument: user id is required")
+	}
+	switch provider {
+	case ProviderLocal:
+		if providerID != "" {
+			return nil, NewBusinessRuleError("invalid argument: provider id should be empty for local provider")
+		}
+		if email == "" && provider == ProviderLocal {
+			return nil, NewBusinessRuleError("invalid argument: email is required for password provider")
+		}
+		if passwordHash == "" && provider == ProviderLocal {
+			return nil, NewBusinessRuleError("invalid argument: password hash is required for password provider")
+		}
+	default:
+		return nil, NewBusinessRuleError("invalid argument: unsupported auth provider")
+	}
+
+	return &AuthIdentity{
+		ID:           id,
+		UserID:       userID,
+		Provider:     provider,
+		ProviderID:   providerID,
+		Email:        email,
+		PasswordHash: passwordHash,
 	}, nil
 }
 

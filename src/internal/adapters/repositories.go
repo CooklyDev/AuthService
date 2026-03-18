@@ -26,8 +26,8 @@ func NewUserRepository(db DBTX) *UserRepository {
 
 func (r *UserRepository) Add(user *domain.User) error {
 	const query = `
-		INSERT INTO users (id, username, email, hashed_password)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO users (id, username)
+		VALUES ($1, $2)
 	`
 
 	_, err := r.db.Exec(
@@ -35,8 +35,6 @@ func (r *UserRepository) Add(user *domain.User) error {
 		query,
 		user.ID,
 		user.Username,
-		user.Email,
-		user.HashedPassword,
 	)
 
 	if err != nil {
@@ -46,25 +44,65 @@ func (r *UserRepository) Add(user *domain.User) error {
 	return nil
 }
 
-func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
+// AuthIdentityRepository implements application.AuthIdentityRepo using PostgreSQL.
+type AuthIdentityRepository struct {
+	db DBTX
+}
+
+func NewAuthIdentityRepository(db DBTX) *AuthIdentityRepository {
+	return &AuthIdentityRepository{db: db}
+}
+
+func (r *AuthIdentityRepository) Add(identity *domain.AuthIdentity) error {
 	const query = `
-		SELECT id, username, email, hashed_password
-		FROM users
+		INSERT INTO auth_identities (id, user_id, provider, provider_id, email, password_hash)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`
+
+	_, err := r.db.Exec(
+		context.Background(),
+		query,
+		identity.ID,
+		identity.UserID,
+		identity.Provider,
+		identity.ProviderID,
+		identity.Email,
+		identity.PasswordHash,
+	)
+	if err != nil {
+		return NewAdapterError("add auth identity", err)
+	}
+
+	return nil
+}
+
+func (r *AuthIdentityRepository) GetByEmail(email string) (*domain.AuthIdentity, error) {
+	const query = `
+		SELECT id, user_id, provider, provider_id, email, password_hash
+		FROM auth_identities
 		WHERE email = $1
 	`
 
 	row := r.db.QueryRow(context.Background(), query, email)
 
-	var user domain.User
-	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.HashedPassword)
+	var identity domain.AuthIdentity
+	err := row.Scan(
+		&identity.ID,
+		&identity.UserID,
+		&identity.Provider,
+		&identity.ProviderID,
+		&identity.Email,
+		&identity.PasswordHash,
+	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, NewAdapterError("get user by email", err)
+
+		return nil, NewAdapterError("get auth identity by email", err)
 	}
 
-	return &user, nil
+	return &identity, nil
 }
 
 // SessionRepository implements application.SessionRepo using PostgreSQL

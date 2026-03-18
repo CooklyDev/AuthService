@@ -10,11 +10,12 @@ import (
 )
 
 type UnitOfWorkPostgres struct {
-	pool        *pgxpool.Pool
-	tx          DBTX
-	logger      domain.Logger
-	userRepo    application.UserRepo
-	sessionRepo application.SessionRepo
+	pool             *pgxpool.Pool
+	tx               DBTX
+	logger           domain.Logger
+	userRepo         application.UserRepo
+	authIdentityRepo application.AuthIdentityRepo
+	sessionRepo      application.SessionRepo
 }
 
 func NewUnitOfWorkPostgres(pool *pgxpool.Pool, logger domain.Logger) *UnitOfWorkPostgres {
@@ -108,6 +109,10 @@ func (u *UnitOfWorkPostgres) UserRepository() application.UserRepo {
 	return u.userRepo
 }
 
+func (u *UnitOfWorkPostgres) AuthIdentityRepository() application.AuthIdentityRepo {
+	return u.authIdentityRepo
+}
+
 func (u *UnitOfWorkPostgres) SessionRepository() application.SessionRepo {
 	return u.sessionRepo
 }
@@ -115,5 +120,6 @@ func (u *UnitOfWorkPostgres) SessionRepository() application.SessionRepo {
 func (u *UnitOfWorkPostgres) bind(db DBTX) {
 	u.tx = db
 	u.userRepo = NewUserRepository(db)
+	u.authIdentityRepo = NewAuthIdentityRepository(db)
 	u.sessionRepo = NewSessionRepository(db)
 }

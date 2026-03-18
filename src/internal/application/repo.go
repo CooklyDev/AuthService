@@ -6,7 +6,11 @@ import (
 
 type UserRepo interface {
 	Add(user *domain.User) error
-	GetByEmail(email string) (*domain.User, error)
+}
+
+type AuthIdentityRepo interface {
+	Add(identity *domain.AuthIdentity) error
+	GetByEmail(email string) (*domain.AuthIdentity, error)
 }
 
 type SessionRepo interface {

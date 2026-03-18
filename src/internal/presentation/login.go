@@ -24,7 +24,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	session, err := authService.Login(email, password)
+	session, err := authService.LocalLogin(email, password)
 	if err != nil {
 		status, code, message := MapAppError(err)
 		Fail(c, status, code, message)

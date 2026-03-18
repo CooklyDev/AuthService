@@ -13,7 +13,7 @@ func NewBusinessRuleError(message string) error {
 }
 
 func (e *BusinessRuleError) Error() string {
-	return ErrBusinessRule.Error() + ": " + e.Message
+	return e.Message
 }
 
 func (e *BusinessRuleError) Unwrap() error {

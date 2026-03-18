@@ -4,7 +4,7 @@ import "github.com/gin-gonic/gin"
 
 // Register godoc
 // @Summary Register user
-// @Description Creates a new user account.
+// @Description Creates a new user account and session.
 // @Tags Authentication
 // @Accept x-www-form-urlencoded
 // @Produce json
@@ -26,11 +26,12 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	if err := authService.Register(username, email, password); err != nil {
+	session, err := authService.LocalRegister(username, email, password)
+	if err != nil {
 		status, code, message := MapAppError(err)
 		Fail(c, status, code, message)
 		return
 	}
 
-	Ok(c, nil)
+	Ok(c, session)
 }
