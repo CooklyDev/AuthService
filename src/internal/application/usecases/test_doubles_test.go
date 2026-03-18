@@ -6,15 +6,22 @@ import (
 )
 
 type userRepoStub struct {
-	user *domain.User
 }
 
 func (stub *userRepoStub) Add(*domain.User) error {
 	return nil
 }
 
-func (stub *userRepoStub) GetByEmail(string) (*domain.User, error) {
-	return stub.user, nil
+type authIdentityRepoStub struct {
+	identity *domain.AuthIdentity
+}
+
+func (stub *authIdentityRepoStub) Add(*domain.AuthIdentity) error {
+	return nil
+}
+
+func (stub *authIdentityRepoStub) GetByEmail(string) (*domain.AuthIdentity, error) {
+	return stub.identity, nil
 }
 
 type sessionRepoStub struct{}
@@ -48,14 +55,16 @@ func (stub *loggerStub) Warn(string) {}
 func (stub *loggerStub) Error(string) {}
 
 type uowStub struct {
-	userRepo    *userRepoStub
-	sessionRepo *sessionRepoStub
+	userRepo         *userRepoStub
+	authIdentityRepo *authIdentityRepoStub
+	sessionRepo      *sessionRepoStub
 }
 
 func newUoWStub() *uowStub {
 	return &uowStub{
-		userRepo:    &userRepoStub{},
-		sessionRepo: &sessionRepoStub{},
+		userRepo:         &userRepoStub{},
+		authIdentityRepo: &authIdentityRepoStub{},
+		sessionRepo:      &sessionRepoStub{},
 	}
 }
 
@@ -73,6 +82,10 @@ func (stub *uowStub) Rollback() error {
 
 func (stub *uowStub) UserRepository() application.UserRepo {
 	return stub.userRepo
+}
+
+func (stub *uowStub) AuthIdentityRepository() application.AuthIdentityRepo {
+	return stub.authIdentityRepo
 }
 
 func (stub *uowStub) SessionRepository() application.SessionRepo {

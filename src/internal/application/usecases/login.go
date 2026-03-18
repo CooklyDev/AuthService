@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func (service AuthService) Login(email string, password string) (*uuid.UUID, error) {
+func (service AuthService) LocalLogin(email string, password string) (*uuid.UUID, error) {
+	email = domain.NormalizeEmail(email)
 	maskedEmail := domain.MaskEmail(email)
 
 	if err := service.UoW.Begin(); err != nil {
@@ -34,12 +35,12 @@ func (service AuthService) Login(email string, password string) (*uuid.UUID, err
 		),
 	)
 
-	userRepo := service.UoW.UserRepository()
-	user, err := userRepo.GetByEmail(email)
+	authIdentityRepo := service.UoW.AuthIdentityRepository()
+	authIdentity, err := authIdentityRepo.GetByEmail(email)
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
-				"login failed: get user by email: email=%s error=%s",
+				"login failed: get auth identity by email: email=%s error=%s",
 				maskedEmail,
 				err.Error(),
 			),
@@ -47,7 +48,7 @@ func (service AuthService) Login(email string, password string) (*uuid.UUID, err
 
 		return nil, err
 	}
-	if user == nil {
+	if authIdentity == nil {
 		service.Logger.Warn(
 			fmt.Sprintf(
 				"login failed: invalid credentials: email=%s",
@@ -58,7 +59,7 @@ func (service AuthService) Login(email string, password string) (*uuid.UUID, err
 		return nil, domain.NewBusinessRuleError("invalid credentials")
 	}
 
-	passwordMatches, err := service.Hasher.Compare(password, user.HashedPassword)
+	passwordMatches, err := service.Hasher.Compare(password, authIdentity.PasswordHash)
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
@@ -82,12 +83,12 @@ func (service AuthService) Login(email string, password string) (*uuid.UUID, err
 		return nil, domain.NewBusinessRuleError("invalid credentials")
 	}
 
-	session, err := domain.NewSession(uuid.New(), user.ID)
+	session, err := domain.NewSession(uuid.New(), authIdentity.UserID)
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
 				"login failed: create session: user_id=%s email=%s error=%s",
-				user.ID,
+				authIdentity.UserID,
 				maskedEmail,
 				err.Error(),
 			),
@@ -102,7 +103,7 @@ func (service AuthService) Login(email string, password string) (*uuid.UUID, err
 		service.Logger.Error(
 			fmt.Sprintf(
 				"login failed: add session: user_id=%s email=%s error=%s",
-				user.ID,
+				authIdentity.UserID,
 				maskedEmail,
 				err.Error(),
 			),
@@ -116,7 +117,7 @@ func (service AuthService) Login(email string, password string) (*uuid.UUID, err
 		service.Logger.Error(
 			fmt.Sprintf(
 				"login failed: commit transaction: user_id=%s email=%s error=%s",
-				user.ID,
+				authIdentity.UserID,
 				maskedEmail,
 				err.Error(),
 			),
@@ -128,7 +129,7 @@ func (service AuthService) Login(email string, password string) (*uuid.UUID, err
 	service.Logger.Info(
 		fmt.Sprintf(
 			"login completed: user_id=%s email=%s",
-			user.ID,
+			authIdentity.UserID,
 			maskedEmail,
 		),
 	)

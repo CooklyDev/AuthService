@@ -12,10 +12,10 @@ func TestLoginSuccess(t *testing.T) {
 	// Arrange
 	userID := uuid.New()
 	uow := newUoWStub()
-	uow.userRepo.user = &domain.User{
-		ID:             userID,
-		Email:          "alice@example.com",
-		HashedPassword: "hashed-password",
+	uow.authIdentityRepo.identity = &domain.AuthIdentity{
+		UserID:       userID,
+		Email:        "alice@example.com",
+		PasswordHash: "hashed-password",
 	}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
@@ -26,7 +26,7 @@ func TestLoginSuccess(t *testing.T) {
 	}
 
 	// Act
-	sessionId, err := service.Login("alice@example.com", "password")
+	sessionId, err := service.LocalLogin("alice@example.com", "password")
 
 	// Assert
 	if err != nil {
@@ -49,7 +49,7 @@ func TestLoginReturnsErrorWhenUserDoesNotExist(t *testing.T) {
 	}
 
 	// Act
-	_, err := service.Login("alice@example.com", "password")
+	_, err := service.LocalLogin("alice@example.com", "password")
 
 	// Assert
 	if !errors.Is(err, domain.ErrBusinessRule) {
@@ -60,10 +60,10 @@ func TestLoginReturnsErrorWhenUserDoesNotExist(t *testing.T) {
 func TestLoginReturnsErrorWhenPasswordIsInvalid(t *testing.T) {
 	// Arrange
 	uow := newUoWStub()
-	uow.userRepo.user = &domain.User{
-		ID:             uuid.New(),
-		Email:          "alice@example.com",
-		HashedPassword: "hashed-secret",
+	uow.authIdentityRepo.identity = &domain.AuthIdentity{
+		UserID:       uuid.New(),
+		Email:        "alice@example.com",
+		PasswordHash: "hashed-secret",
 	}
 	hasher := &hasherStub{}
 	logger := &loggerStub{}
@@ -74,7 +74,7 @@ func TestLoginReturnsErrorWhenPasswordIsInvalid(t *testing.T) {
 	}
 
 	// Act
-	_, err := service.Login("alice@example.com", "password")
+	_, err := service.LocalLogin("alice@example.com", "password")
 
 	// Assert
 	if !errors.Is(err, domain.ErrBusinessRule) {

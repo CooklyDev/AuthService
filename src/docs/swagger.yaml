@@ -55,6 +55,33 @@ paths:
       summary: Login user
       tags:
       - Authentication
+  /logout:
+    post:
+      description: Terminates the current user session.
+      parameters:
+      - description: Session ID
+        in: header
+        name: X-Session-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presentation.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presentation.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/presentation.Response'
+      summary: Logout user
+      tags:
+      - Authentication
   /register:
     post:
       consumes:

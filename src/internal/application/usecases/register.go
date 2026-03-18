@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/CooklyDev/AuthService/internal/application"
 	"github.com/CooklyDev/AuthService/internal/domain"
@@ -14,11 +15,13 @@ type AuthService struct {
 	UoW    application.UnitOfWork
 }
 
-func (service AuthService) Register(username string, email string, password string) error {
+func (service AuthService) LocalRegister(username string, email string, password string) (*domain.Session, error) {
+	email = domain.NormalizeEmail(email)
+	password = strings.TrimSpace(password)
 	maskedEmail := domain.MaskEmail(email)
 
 	if err := service.UoW.Begin(); err != nil {
-		return err
+		return nil, err
 	}
 
 	defer func() {
@@ -43,6 +46,32 @@ func (service AuthService) Register(username string, email string, password stri
 		),
 	)
 
+	authIdentityRepo := service.UoW.AuthIdentityRepository()
+	pastAuth, err := authIdentityRepo.GetByEmail(email)
+	if err != nil {
+		service.Logger.Error(
+			fmt.Sprintf(
+				"register failed: get auth identity by email: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
+	}
+	if pastAuth != nil {
+		service.Logger.Warn(
+			fmt.Sprintf(
+				"register failed: email already exists: username=%s email=%s",
+				username,
+				maskedEmail,
+			),
+		)
+
+		return nil, domain.NewBusinessRuleError("invalid email: user with such email already exists")
+	}
+
 	if !(domain.ValidatePassword(password)) {
 		service.Logger.Warn(
 			fmt.Sprintf(
@@ -52,7 +81,7 @@ func (service AuthService) Register(username string, email string, password stri
 			),
 		)
 
-		return domain.NewBusinessRuleError("invalid password")
+		return nil, domain.NewBusinessRuleError("invalid password")
 	}
 
 	hashedPassword, err := service.Hasher.Hash(password)
@@ -66,36 +95,10 @@ func (service AuthService) Register(username string, email string, password stri
 			),
 		)
 
-		return err
+		return nil, err
 	}
 
-	userRepo := service.UoW.UserRepository()
-	oldUser, err := userRepo.GetByEmail(email)
-	if err != nil {
-		service.Logger.Error(
-			fmt.Sprintf(
-				"register failed: get user by email: username=%s email=%s error=%s",
-				username,
-				maskedEmail,
-				err.Error(),
-			),
-		)
-
-		return err
-	}
-	if oldUser != nil {
-		service.Logger.Warn(
-			fmt.Sprintf(
-				"register failed: email already exists: username=%s email=%s",
-				username,
-				maskedEmail,
-			),
-		)
-
-		return domain.NewBusinessRuleError("invalid email: user with such email already exists")
-	}
-
-	user, err := domain.NewUser(uuid.New(), username, email, hashedPassword)
+	user, err := domain.NewUser(uuid.New(), username)
 	if err != nil {
 		service.Logger.Warn(
 			fmt.Sprintf(
@@ -106,9 +109,23 @@ func (service AuthService) Register(username string, email string, password stri
 			),
 		)
 
-		return err
+		return nil, err
+	}
+	authIdentity, err := domain.NewAuthIdentity(uuid.New(), user.ID, domain.ProviderLocal, "", email, hashedPassword)
+	if err != nil {
+		service.Logger.Warn(
+			fmt.Sprintf(
+				"register failed: invalid auth identity data: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
 	}
 
+	userRepo := service.UoW.UserRepository()
 	err = userRepo.Add(user)
 	if err != nil {
 		service.Logger.Error(
@@ -120,7 +137,47 @@ func (service AuthService) Register(username string, email string, password stri
 			),
 		)
 
-		return err
+		return nil, err
+	}
+	err = authIdentityRepo.Add(authIdentity)
+	if err != nil {
+		service.Logger.Error(
+			fmt.Sprintf(
+				"register failed: add auth identity: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
+	}
+	sessionRepo := service.UoW.SessionRepository()
+	session, err := domain.NewSession(uuid.New(), user.ID)
+	if err != nil {
+		service.Logger.Warn(
+			fmt.Sprintf(
+				"register failed: invalid session data: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
+	}
+	err = sessionRepo.Add(session)
+	if err != nil {
+		service.Logger.Error(
+			fmt.Sprintf(
+				"register failed: create session: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
 	}
 
 	err = service.UoW.Commit()
@@ -133,7 +190,7 @@ func (service AuthService) Register(username string, email string, password stri
 				err.Error(),
 			),
 		)
-		return err
+		return nil, err
 	}
 
 	service.Logger.Info(
@@ -145,5 +202,5 @@ func (service AuthService) Register(username string, email string, password stri
 		),
 	)
 
-	return nil
+	return session, nil
 }

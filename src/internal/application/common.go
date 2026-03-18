@@ -10,5 +10,6 @@ type UnitOfWork interface {
 	Commit() error
 	Rollback() error
 	UserRepository() UserRepo
+	AuthIdentityRepository() AuthIdentityRepo
 	SessionRepository() SessionRepo
 }
