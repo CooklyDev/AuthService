@@ -44,7 +44,7 @@ func NewPostgresPool(
 			),
 		)
 
-		return nil, fmt.Errorf("parse postgres config: %w", err)
+		return nil, NewAdapterError("parse postgres config", err)
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
@@ -56,7 +56,7 @@ func NewPostgresPool(
 			),
 		)
 
-		return nil, fmt.Errorf("create postgres pool: %w", err)
+		return nil, NewAdapterError("create postgres pool", err)
 	}
 
 	if err := pool.Ping(ctx); err != nil {
@@ -68,7 +68,7 @@ func NewPostgresPool(
 			),
 		)
 
-		return nil, fmt.Errorf("ping postgres: %w", err)
+		return nil, NewAdapterError("ping postgres pool", err)
 	}
 
 	logger.Info(

@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/CooklyDev/AuthService/internal/domain"
 	"github.com/jackc/pgx/v5"
@@ -41,7 +40,7 @@ func (r *UserRepository) Add(user *domain.User) error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("add user: %w", err)
+		return NewAdapterError("add user", err)
 	}
 
 	return nil
@@ -62,7 +61,7 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 		if err == pgx.ErrNoRows {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("get user by email: %w", err)
+		return nil, NewAdapterError("get user by email", err)
 	}
 
 	return &user, nil
@@ -91,7 +90,7 @@ func (r *SessionRepository) Add(session *domain.Session) error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("add session: %w", err)
+		return NewAdapterError("add session", err)
 	}
 
 	return nil
@@ -105,7 +104,7 @@ func (r *SessionRepository) Delete(sessionID string) error {
 
 	_, err := r.db.Exec(context.Background(), query, sessionID)
 	if err != nil {
-		return fmt.Errorf("delete session: %w", err)
+		return NewAdapterError("delete session", err)
 	}
 
 	return nil
