@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/google/uuid"
@@ -44,10 +43,10 @@ func NewUser(id uuid.UUID, username string, email string, password string) (*Use
 	email = strings.TrimSpace(email)
 
 	if username == "" {
-		return nil, errors.New("invalid argument: username is required")
+		return nil, NewBusinessRuleError("invalid argument: username is required")
 	}
 	if email == "" {
-		return nil, errors.New("invalid argument: email is required")
+		return nil, NewBusinessRuleError("invalid argument: email is required")
 	}
 
 	return &User{
@@ -60,10 +59,10 @@ func NewUser(id uuid.UUID, username string, email string, password string) (*Use
 
 func NewSession(id uuid.UUID, userID uuid.UUID) (*Session, error) {
 	if id == uuid.Nil {
-		return nil, errors.New("invalid argument: session id is required")
+		return nil, NewBusinessRuleError("invalid argument: session id is required")
 	}
 	if userID == uuid.Nil {
-		return nil, errors.New("invalid argument: user id is required")
+		return nil, NewBusinessRuleError("invalid argument: user id is required")
 	}
 
 	return &Session{
