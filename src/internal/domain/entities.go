@@ -72,23 +72,25 @@ func NewUser(id uuid.UUID, username string) (*User, error) {
 }
 
 func NewAuthIdentity(id uuid.UUID, userID uuid.UUID, provider Provider, providerID string, email string, passwordHash string) (*AuthIdentity, error) {
+	if id == uuid.Nil {
+		return nil, NewBusinessRuleError("invalid argument: auth identity id is required")
+	}
 	if userID == uuid.Nil {
 		return nil, NewBusinessRuleError("invalid argument: user id is required")
 	}
-	if provider == ProviderLocal {
+	switch provider {
+	case ProviderLocal:
+		if providerID != "" {
+			return nil, NewBusinessRuleError("invalid argument: provider id should be empty for local provider")
+		}
 		if email == "" && provider == ProviderLocal {
 			return nil, NewBusinessRuleError("invalid argument: email is required for password provider")
 		}
 		if passwordHash == "" && provider == ProviderLocal {
 			return nil, NewBusinessRuleError("invalid argument: password hash is required for password provider")
 		}
-	} else {
-		if providerID == "" {
-			return nil, NewBusinessRuleError("invalid argument: provider id is required for oauth providers")
-		}
-		if email != "" {
-			return nil, NewBusinessRuleError("invalid argument: email should be empty for oauth providers")
-		}
+	default:
+		return nil, NewBusinessRuleError("invalid argument: unsupported auth provider")
 	}
 
 	return &AuthIdentity{

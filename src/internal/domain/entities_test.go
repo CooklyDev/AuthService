@@ -181,12 +181,45 @@ func TestNewAuthIdentitySuccessForLocalProvider(t *testing.T) {
 	}
 }
 
+func TestNewAuthIdentityReturnsErrorWhenIDIsEmpty(t *testing.T) {
+	// Arrange
+	userID := uuid.New()
+
+	// Act
+	identity, err := NewAuthIdentity(uuid.Nil, userID, ProviderLocal, "", "alice@example.com", "hashed-password")
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if identity != nil {
+		t.Fatalf("expected nil auth identity, got %+v", identity)
+	}
+}
+
 func TestNewAuthIdentityReturnsErrorWhenUserIDIsEmpty(t *testing.T) {
 	// Arrange
 	id := uuid.New()
 
 	// Act
 	identity, err := NewAuthIdentity(id, uuid.Nil, ProviderLocal, "", "alice@example.com", "hashed-password")
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if identity != nil {
+		t.Fatalf("expected nil auth identity, got %+v", identity)
+	}
+}
+
+func TestNewAuthIdentityReturnsErrorWhenProviderIDIsNotEmptyForLocalProvider(t *testing.T) {
+	// Arrange
+	id := uuid.New()
+	userID := uuid.New()
+
+	// Act
+	identity, err := NewAuthIdentity(id, userID, ProviderLocal, "provider-id", "alice@example.com", "hashed-password")
 
 	// Assert
 	if err == nil {
@@ -221,6 +254,23 @@ func TestNewAuthIdentityReturnsErrorWhenPasswordHashIsEmptyForLocalProvider(t *t
 
 	// Act
 	identity, err := NewAuthIdentity(id, userID, ProviderLocal, "", "alice@example.com", "")
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if identity != nil {
+		t.Fatalf("expected nil auth identity, got %+v", identity)
+	}
+}
+
+func TestNewAuthIdentityReturnsErrorWhenProviderIsUnsupported(t *testing.T) {
+	// Arrange
+	id := uuid.New()
+	userID := uuid.New()
+
+	// Act
+	identity, err := NewAuthIdentity(id, userID, Provider(100), "provider-id", "", "hashed-password")
 
 	// Assert
 	if err == nil {
