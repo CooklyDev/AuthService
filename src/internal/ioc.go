@@ -10,6 +10,7 @@ import (
 	"github.com/CooklyDev/AuthService/internal/application"
 	applicationusecases "github.com/CooklyDev/AuthService/internal/application/usecases"
 	"github.com/CooklyDev/AuthService/internal/domain"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
@@ -89,7 +90,7 @@ func (c *Container) Close() {
 	c.logger.Info("postgres pool closed: dependency=postgres")
 }
 
-func (c *Container) GetAuthService() (*applicationusecases.AuthService, error) {
+func (c *Container) GetAuthService(sessionID uuid.UUID) (*applicationusecases.AuthService, error) {
 	if c.postgresPool == nil {
 		err := errors.New("postgres pool is not initialized")
 		c.logger.Error(
@@ -103,8 +104,9 @@ func (c *Container) GetAuthService() (*applicationusecases.AuthService, error) {
 	}
 
 	uow := adapters.NewUnitOfWorkApp(c.postgresPool, c.redisClient, c.logger, c.sessionTTL)
+	provider := adapters.NewIdProvider(sessionID, uow.SessionRepository())
 
-	return c.CreateAuthService(uow), nil
+	return c.CreateAuthService(uow, provider), nil
 }
 
 func newPostgresPool(ctx context.Context, logger domain.Logger) (*pgxpool.Pool, error) {
@@ -164,10 +166,11 @@ func newRedisClient(ctx context.Context, logger domain.Logger) (*redis.Client, e
 	return adapters.NewRedisClient(ctx, logger, host, port, password)
 }
 
-func (c *Container) CreateAuthService(uow *adapters.UnitOfWorkApp) *applicationusecases.AuthService {
+func (c *Container) CreateAuthService(uow *adapters.UnitOfWorkApp, idProvider application.IdentityProvider) *applicationusecases.AuthService {
 	return &applicationusecases.AuthService{
-		Logger: c.logger,
-		Hasher: c.hasher,
-		UoW:    uow,
+		Logger:      c.logger,
+		Hasher:      c.hasher,
+		UoW:         uow,
+		IdProvdider: idProvider,
 	}
 }

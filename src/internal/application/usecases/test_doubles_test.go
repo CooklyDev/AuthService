@@ -3,6 +3,7 @@ package usecases
 import (
 	"github.com/CooklyDev/AuthService/internal/application"
 	"github.com/CooklyDev/AuthService/internal/domain"
+	"github.com/google/uuid"
 )
 
 type userRepoStub struct {
@@ -30,8 +31,16 @@ func (stub *sessionRepoStub) Add(session *domain.Session) error {
 	return nil
 }
 
-func (stub *sessionRepoStub) Delete(string) error {
+func (stub *sessionRepoStub) Delete(uuid.UUID) error {
 	return nil
+}
+
+func (stub *sessionRepoStub) GetUserSessions(uuid.UUID) ([]*domain.Session, error) {
+	return nil, nil
+}
+
+func (stub *sessionRepoStub) GetSession(uuid.UUID) (*domain.Session, error) {
+	return nil, nil
 }
 
 type hasherStub struct{}

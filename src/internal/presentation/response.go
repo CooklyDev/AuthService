@@ -48,7 +48,7 @@ func MapAppError(err error) (int, string, string) {
 	}
 
 	if errors.Is(err, adapters.ErrAdapter) {
-		return http.StatusInternalServerError, "ADAPTER_ERROR", err.Error()
+		return http.StatusBadRequest, "ADAPTER_ERROR", err.Error()
 	}
 
 	// Default to internal server error for unrecognized errors

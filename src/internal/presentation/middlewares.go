@@ -1,12 +1,13 @@
 package presentation
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/CooklyDev/AuthService/internal"
 	"github.com/CooklyDev/AuthService/internal/application/usecases"
-
-	"fmt"
-
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func GetContainer(container *internal.Container) gin.HandlerFunc {
@@ -27,10 +28,24 @@ func extractAuthService(c *gin.Context) (*usecases.AuthService, error) {
 		return nil, fmt.Errorf("invalid container type")
 	}
 
-	authService, err := container.GetAuthService()
+	authService, err := container.GetAuthService(extractSessionID(c))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get auth service: %w", err)
 	}
 
 	return authService, nil
+}
+
+func extractSessionID(c *gin.Context) uuid.UUID {
+	sessionIDHeader := strings.TrimSpace(c.GetHeader("X-Session-ID"))
+	if sessionIDHeader == "" {
+		return uuid.Nil
+	}
+
+	sessionID, err := uuid.Parse(sessionIDHeader)
+	if err != nil {
+		return uuid.Nil
+	}
+
+	return sessionID
 }
