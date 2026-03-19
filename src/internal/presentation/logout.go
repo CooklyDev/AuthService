@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // Logout godoc
@@ -18,9 +19,15 @@ import (
 // @Failure 500 {object} Response
 // @Router /logout [post]
 func Logout(c *gin.Context) {
-	sessionID := strings.TrimSpace(c.GetHeader("X-Session-ID"))
-	if sessionID == "" {
+	sessionIDHeader := strings.TrimSpace(c.GetHeader("X-Session-ID"))
+	if sessionIDHeader == "" {
 		Fail(c, http.StatusBadRequest, "MISSING_SESSION_ID", "session ID is required")
+		return
+	}
+
+	sessionID, err := uuid.Parse(sessionIDHeader)
+	if err != nil {
+		Fail(c, http.StatusBadRequest, "INVALID_SESSION_ID", "session ID must be a valid UUID")
 		return
 	}
 

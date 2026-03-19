@@ -10,9 +10,10 @@ import (
 )
 
 type AuthService struct {
-	Logger domain.Logger
-	Hasher application.PasswordHasher
-	UoW    application.UnitOfWork
+	Logger      domain.Logger
+	Hasher      application.PasswordHasher
+	UoW         application.UnitOfWork
+	IdProvdider application.IdentityProvider
 }
 
 func (service AuthService) LocalRegister(username string, email string, password string) (*uuid.UUID, error) {

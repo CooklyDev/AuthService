@@ -2,10 +2,12 @@ package usecases
 
 import (
 	"fmt"
-	"strings"
+	"github.com/google/uuid"
+
+	"github.com/CooklyDev/AuthService/internal/domain"
 )
 
-func (service AuthService) Logout(sessionID string) error {
+func (service AuthService) Logout(sessionID uuid.UUID) error {
 	if err := service.UoW.Begin(); err != nil {
 		return err
 	}
@@ -24,14 +26,17 @@ func (service AuthService) Logout(sessionID string) error {
 
 	service.Logger.Info("logout started")
 
-	sessionID = strings.TrimSpace(sessionID)
+	userIdentity := service.IdProvdider.GetUserId()
+	if userIdentity == nil {
+		return domain.NewBusinessRuleError("user not authenticated")
+	}
 
 	sessionRepo := service.UoW.SessionRepository()
-	err := sessionRepo.Delete(sessionID)
+	userSessions, err := sessionRepo.GetUserSessions(*userIdentity)
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
-				"logout failed: delete session: error=%s",
+				"logout failed: get user sessions: error=%s",
 				err.Error(),
 			),
 		)
@@ -39,11 +44,35 @@ func (service AuthService) Logout(sessionID string) error {
 		return err
 	}
 
+	sessionFound := false
+	for _, session := range userSessions {
+		if session.ID == sessionID {
+			sessionFound = true
+			break
+		}
+	}
+
+	if !sessionFound {
+		return nil
+	}
+
 	err = service.UoW.Commit()
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
 				"logout failed: commit transaction: error=%s",
+				err.Error(),
+			),
+		)
+
+		return err
+	}
+
+	err = sessionRepo.Delete(sessionID)
+	if err != nil {
+		service.Logger.Error(
+			fmt.Sprintf(
+				"logout failed: delete session: error=%s",
 				err.Error(),
 			),
 		)
