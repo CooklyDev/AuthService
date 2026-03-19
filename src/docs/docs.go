@@ -68,18 +68,18 @@ const docTemplate = `{
         },
         "/logout": {
             "post": {
-                "description": "Terminates the current user session.",
+                "description": "Deletes the current session identified by X-Session-ID.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Logout user",
+                "summary": "Logout current session",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Session ID",
+                        "description": "Current session ID",
                         "name": "X-Session-ID",
                         "in": "header",
                         "required": true
@@ -109,7 +109,7 @@ const docTemplate = `{
         },
         "/register": {
             "post": {
-                "description": "Creates a new user account.",
+                "description": "Creates a new user account and session.",
                 "consumes": [
                     "application/x-www-form-urlencoded"
                 ],

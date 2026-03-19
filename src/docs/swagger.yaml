@@ -57,9 +57,9 @@ paths:
       - Authentication
   /logout:
     post:
-      description: Terminates the current user session.
+      description: Deletes the current session identified by X-Session-ID.
       parameters:
-      - description: Session ID
+      - description: Current session ID
         in: header
         name: X-Session-ID
         required: true
@@ -79,14 +79,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/presentation.Response'
-      summary: Logout user
+      summary: Logout current session
       tags:
       - Authentication
   /register:
     post:
       consumes:
       - application/x-www-form-urlencoded
-      description: Creates a new user account.
+      description: Creates a new user account and session.
       parameters:
       - description: Username
         in: formData

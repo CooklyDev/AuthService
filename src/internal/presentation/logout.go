@@ -9,11 +9,11 @@ import (
 )
 
 // Logout godoc
-// @Summary Logout user
-// @Description Terminates the current user session.
+// @Summary Logout current session
+// @Description Deletes the current session identified by X-Session-ID.
 // @Tags Authentication
 // @Produce json
-// @Param X-Session-ID header string true "Session ID"
+// @Param X-Session-ID header string true "Current session ID"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
 // @Failure 500 {object} Response
