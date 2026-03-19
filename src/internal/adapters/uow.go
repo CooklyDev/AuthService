@@ -3,36 +3,47 @@ package adapters
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/CooklyDev/AuthService/internal/application"
 	"github.com/CooklyDev/AuthService/internal/domain"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
-type UnitOfWorkPostgres struct {
+type UnitOfWorkApp struct {
 	pool             *pgxpool.Pool
-	tx               DBTX
+	redisClient      *redis.Client
+	pgxTX            DBTX
 	logger           domain.Logger
 	userRepo         application.UserRepo
 	authIdentityRepo application.AuthIdentityRepo
 	sessionRepo      application.SessionRepo
+	sessionTTL       time.Duration
 }
 
-func NewUnitOfWorkPostgres(pool *pgxpool.Pool, logger domain.Logger) *UnitOfWorkPostgres {
-	uow := &UnitOfWorkPostgres{
-		pool:   pool,
-		logger: logger,
+func NewUnitOfWorkApp(
+	pool *pgxpool.Pool,
+	client *redis.Client,
+	logger domain.Logger,
+	sessionTTL time.Duration,
+) *UnitOfWorkApp {
+	uow := &UnitOfWorkApp{
+		pool:        pool,
+		redisClient: client,
+		logger:      logger,
+		sessionTTL:  sessionTTL,
 	}
 
-	uow.bind(pool)
+	uow.bind(pool, client)
 
 	return uow
 }
 
-func (u *UnitOfWorkPostgres) Begin() error {
+func (u *UnitOfWorkApp) Begin() error {
 	u.logger.Debug("uow: begin transaction")
 
-	tx, err := u.pool.Begin(context.Background())
+	pgxTX, err := u.pool.Begin(context.Background())
 	if err != nil {
 		u.logger.Error(
 			fmt.Sprintf(
@@ -43,14 +54,13 @@ func (u *UnitOfWorkPostgres) Begin() error {
 
 		return err
 	}
-
-	u.bind(tx)
+	u.bind(pgxTX, u.redisClient)
 
 	return nil
 }
 
-func (u *UnitOfWorkPostgres) Commit() error {
-	tx, ok := u.tx.(interface {
+func (u *UnitOfWorkApp) Commit() error {
+	pgxTX, ok := u.pgxTX.(interface {
 		Commit(ctx context.Context) error
 	})
 	if !ok {
@@ -60,7 +70,7 @@ func (u *UnitOfWorkPostgres) Commit() error {
 
 	u.logger.Debug("uow: commit transaction")
 
-	err := tx.Commit(context.Background())
+	err := pgxTX.Commit(context.Background())
 	if err != nil {
 		u.logger.Error(
 			fmt.Sprintf(
@@ -72,13 +82,13 @@ func (u *UnitOfWorkPostgres) Commit() error {
 		return err
 	}
 
-	u.bind(u.pool)
+	u.bind(u.pool, u.redisClient)
 
 	return nil
 }
 
-func (u *UnitOfWorkPostgres) Rollback() error {
-	tx, ok := u.tx.(interface {
+func (u *UnitOfWorkApp) Rollback() error {
+	pgxTX, ok := u.pgxTX.(interface {
 		Rollback(ctx context.Context) error
 	})
 	if !ok {
@@ -88,7 +98,7 @@ func (u *UnitOfWorkPostgres) Rollback() error {
 
 	u.logger.Debug("uow: rollback transaction")
 
-	err := tx.Rollback(context.Background())
+	err := pgxTX.Rollback(context.Background())
 	if err != nil {
 		u.logger.Error(
 			fmt.Sprintf(
@@ -100,26 +110,27 @@ func (u *UnitOfWorkPostgres) Rollback() error {
 		return err
 	}
 
-	u.bind(u.pool)
+	u.bind(u.pool, u.redisClient)
 
 	return nil
 }
 
-func (u *UnitOfWorkPostgres) UserRepository() application.UserRepo {
+func (u *UnitOfWorkApp) UserRepository() application.UserRepo {
 	return u.userRepo
 }
 
-func (u *UnitOfWorkPostgres) AuthIdentityRepository() application.AuthIdentityRepo {
+func (u *UnitOfWorkApp) AuthIdentityRepository() application.AuthIdentityRepo {
 	return u.authIdentityRepo
 }
 
-func (u *UnitOfWorkPostgres) SessionRepository() application.SessionRepo {
+func (u *UnitOfWorkApp) SessionRepository() application.SessionRepo {
 	return u.sessionRepo
 }
 
-func (u *UnitOfWorkPostgres) bind(db DBTX) {
-	u.tx = db
-	u.userRepo = NewUserRepository(db)
-	u.authIdentityRepo = NewAuthIdentityRepository(db)
-	u.sessionRepo = NewSessionRepository(db)
+func (u *UnitOfWorkApp) bind(db DBTX, redis *redis.Client) {
+	u.pgxTX = db
+	u.redisClient = redis
+	u.userRepo = NewPgxUserRepository(db)
+	u.authIdentityRepo = NewPgxAuthIdentityRepository(db)
+	u.sessionRepo = NewRedisSessionRepository(redis, u.sessionTTL)
 }

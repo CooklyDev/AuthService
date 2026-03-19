@@ -2,10 +2,13 @@ package adapters
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/CooklyDev/AuthService/internal/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/redis/go-redis/v9"
 )
 
 // DBTX represents either a connection or a transaction
@@ -15,16 +18,16 @@ type DBTX interface {
 	QueryRow(ctx context.Context, sql string, arguments ...interface{}) pgx.Row
 }
 
-// UserRepository implements application.UserRepo using PostgreSQL
-type UserRepository struct {
+// PgxUserRepository implements application.UserRepo using PostgreSQL.
+type PgxUserRepository struct {
 	db DBTX
 }
 
-func NewUserRepository(db DBTX) *UserRepository {
-	return &UserRepository{db: db}
+func NewPgxUserRepository(db DBTX) *PgxUserRepository {
+	return &PgxUserRepository{db: db}
 }
 
-func (r *UserRepository) Add(user *domain.User) error {
+func (r *PgxUserRepository) Add(user *domain.User) error {
 	const query = `
 		INSERT INTO users (id, username)
 		VALUES ($1, $2)
@@ -44,16 +47,16 @@ func (r *UserRepository) Add(user *domain.User) error {
 	return nil
 }
 
-// AuthIdentityRepository implements application.AuthIdentityRepo using PostgreSQL.
-type AuthIdentityRepository struct {
+// PgxAuthIdentityRepository implements application.AuthIdentityRepo using PostgreSQL.
+type PgxAuthIdentityRepository struct {
 	db DBTX
 }
 
-func NewAuthIdentityRepository(db DBTX) *AuthIdentityRepository {
-	return &AuthIdentityRepository{db: db}
+func NewPgxAuthIdentityRepository(db DBTX) *PgxAuthIdentityRepository {
+	return &PgxAuthIdentityRepository{db: db}
 }
 
-func (r *AuthIdentityRepository) Add(identity *domain.AuthIdentity) error {
+func (r *PgxAuthIdentityRepository) Add(identity *domain.AuthIdentity) error {
 	const query = `
 		INSERT INTO auth_identities (id, user_id, provider, provider_id, email, password_hash)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -76,7 +79,7 @@ func (r *AuthIdentityRepository) Add(identity *domain.AuthIdentity) error {
 	return nil
 }
 
-func (r *AuthIdentityRepository) GetByEmail(email string) (*domain.AuthIdentity, error) {
+func (r *PgxAuthIdentityRepository) GetByEmail(email string) (*domain.AuthIdentity, error) {
 	const query = `
 		SELECT id, user_id, provider, provider_id, email, password_hash
 		FROM auth_identities
@@ -105,16 +108,16 @@ func (r *AuthIdentityRepository) GetByEmail(email string) (*domain.AuthIdentity,
 	return &identity, nil
 }
 
-// SessionRepository implements application.SessionRepo using PostgreSQL
-type SessionRepository struct {
+// PgxSessionRepository implements application.SessionRepo using PostgreSQL.
+type PgxSessionRepository struct {
 	db DBTX
 }
 
-func NewSessionRepository(db DBTX) *SessionRepository {
-	return &SessionRepository{db: db}
+func NewPgxSessionRepository(db DBTX) *PgxSessionRepository {
+	return &PgxSessionRepository{db: db}
 }
 
-func (r *SessionRepository) Add(session *domain.Session) error {
+func (r *PgxSessionRepository) Add(session *domain.Session) error {
 	const query = `
 		INSERT INTO sessions (id, user_id)
 		VALUES ($1, $2)
@@ -134,13 +137,45 @@ func (r *SessionRepository) Add(session *domain.Session) error {
 	return nil
 }
 
-func (r *SessionRepository) Delete(sessionID string) error {
+func (r *PgxSessionRepository) Delete(sessionID string) error {
 	const query = `
 		DELETE FROM sessions
 		WHERE id = $1
 	`
 
 	_, err := r.db.Exec(context.Background(), query, sessionID)
+	if err != nil {
+		return NewAdapterError("delete session", err)
+	}
+
+	return nil
+}
+
+type RedisSessionRepository struct {
+	redisClient *redis.Client
+	sessionTTL  time.Duration
+}
+
+func NewRedisSessionRepository(redisClient *redis.Client, sessionTTL time.Duration) *RedisSessionRepository {
+	return &RedisSessionRepository{redisClient: redisClient, sessionTTL: sessionTTL}
+}
+
+func (r *RedisSessionRepository) Add(session *domain.Session) error {
+	key := fmt.Sprintf("session:%s", session.ID.String())
+	value := session.UserID.String()
+
+	err := r.redisClient.Set(context.Background(), key, value, r.sessionTTL).Err()
+	if err != nil {
+		return NewAdapterError("add session", err)
+	}
+
+	return nil
+}
+
+func (r *RedisSessionRepository) Delete(sessionID string) error {
+	key := fmt.Sprintf("session:%s", sessionID)
+
+	err := r.redisClient.Del(context.Background(), key).Err()
 	if err != nil {
 		return NewAdapterError("delete session", err)
 	}

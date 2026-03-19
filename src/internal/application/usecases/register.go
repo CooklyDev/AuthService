@@ -15,7 +15,7 @@ type AuthService struct {
 	UoW    application.UnitOfWork
 }
 
-func (service AuthService) LocalRegister(username string, email string, password string) (*domain.Session, error) {
+func (service AuthService) LocalRegister(username string, email string, password string) (*uuid.UUID, error) {
 	email = domain.NormalizeEmail(email)
 	password = strings.TrimSpace(password)
 	maskedEmail := domain.MaskEmail(email)
@@ -152,25 +152,11 @@ func (service AuthService) LocalRegister(username string, email string, password
 
 		return nil, err
 	}
-	sessionRepo := service.UoW.SessionRepository()
 	session, err := domain.NewSession(uuid.New(), user.ID)
 	if err != nil {
 		service.Logger.Warn(
 			fmt.Sprintf(
 				"register failed: invalid session data: username=%s email=%s error=%s",
-				username,
-				maskedEmail,
-				err.Error(),
-			),
-		)
-
-		return nil, err
-	}
-	err = sessionRepo.Add(session)
-	if err != nil {
-		service.Logger.Error(
-			fmt.Sprintf(
-				"register failed: create session: username=%s email=%s error=%s",
 				username,
 				maskedEmail,
 				err.Error(),
@@ -193,6 +179,21 @@ func (service AuthService) LocalRegister(username string, email string, password
 		return nil, err
 	}
 
+	sessionRepo := service.UoW.SessionRepository()
+	err = sessionRepo.Add(session)
+	if err != nil {
+		service.Logger.Error(
+			fmt.Sprintf(
+				"register failed: create session after commit: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
+	}
+
 	service.Logger.Info(
 		fmt.Sprintf(
 			"register completed: user_id=%s username=%s email=%s",
@@ -202,5 +203,5 @@ func (service AuthService) LocalRegister(username string, email string, password
 		),
 	)
 
-	return session, nil
+	return &session.ID, nil
 }

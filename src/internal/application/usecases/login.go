@@ -97,12 +97,11 @@ func (service AuthService) LocalLogin(email string, password string) (*uuid.UUID
 		return nil, err
 	}
 
-	sessionRepo := service.UoW.SessionRepository()
-	err = sessionRepo.Add(session)
+	err = service.UoW.Commit()
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
-				"login failed: add session: user_id=%s email=%s error=%s",
+				"login failed: commit transaction: user_id=%s email=%s error=%s",
 				authIdentity.UserID,
 				maskedEmail,
 				err.Error(),
@@ -112,11 +111,12 @@ func (service AuthService) LocalLogin(email string, password string) (*uuid.UUID
 		return nil, err
 	}
 
-	err = service.UoW.Commit()
+	sessionRepo := service.UoW.SessionRepository()
+	err = sessionRepo.Add(session)
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
-				"login failed: commit transaction: user_id=%s email=%s error=%s",
+				"login failed: add session after commit: user_id=%s email=%s error=%s",
 				authIdentity.UserID,
 				maskedEmail,
 				err.Error(),
