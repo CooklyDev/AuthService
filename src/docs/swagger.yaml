@@ -121,6 +121,35 @@ paths:
       summary: Register user
       tags:
       - Authentication
+  /resolve:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Returns session and user identifiers for the provided session ID.
+      parameters:
+      - description: Session ID
+        in: formData
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presentation.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presentation.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/presentation.Response'
+      summary: Resolve current session
+      tags:
+      - Authentication
 schemes:
 - http
 swagger: "2.0"

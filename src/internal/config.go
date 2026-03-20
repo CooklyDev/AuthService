@@ -29,18 +29,18 @@ type PostgresConfig struct {
 
 func NewPostgresConfig() *PostgresConfig {
 	var port uint16
-	portStr := LookupEnvRequired("POSTGRES_PORT")
+	portStr := LookupEnvRequired("DB_PORT")
 	_, err := fmt.Sscanf(portStr, "%d", &port)
 	if err != nil {
-		panic("invalid POSTGRES_PORT value: " + portStr)
+		panic("invalid DB_PORT value: " + portStr)
 	}
 	return &PostgresConfig{
-		Host:     LookupEnvRequired("POSTGRES_HOST"),
+		Host:     LookupEnvRequired("DB_HOST"),
 		Port:     port,
-		User:     LookupEnvRequired("POSTGRES_USER"),
-		Password: LookupEnvRequired("POSTGRES_PASSWORD"),
-		DBName:   LookupEnvRequired("POSTGRES_DB"),
-		SSLMode:  LookupEnvRequired("POSTGRES_SSL_MODE"),
+		User:     LookupEnvRequired("DB_USER"),
+		Password: LookupEnvRequired("DB_PASSWORD"),
+		DBName:   LookupEnvRequired("DB_NAME"),
+		SSLMode:  LookupEnvRequired("DB_SSL_MODE"),
 	}
 }
 
@@ -75,8 +75,7 @@ type AppConfig struct {
 }
 
 func convertSessionTTL(sessionTTLStr string) time.Duration {
-	var sessionTTL time.Duration
-	_, err := fmt.Sscanf(sessionTTLStr, "%d", &sessionTTL)
+	sessionTTL, err := time.ParseDuration(sessionTTLStr)
 	if err != nil {
 		panic("invalid SESSION_TTL value: " + sessionTTLStr)
 	}

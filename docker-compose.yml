@@ -63,10 +63,12 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DB_SSL_MODE: ${DB_SSL_MODE}
       REDIS_HOST: redis
       REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       SESSION_TTL: ${SESSION_TTL}
+      SESSION_PREFIX: ${SESSION_PREFIX}
       APP_PORT: ${APP_PORT:-8080}
       GIN_MODE: release
     ports:

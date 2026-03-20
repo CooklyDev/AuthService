@@ -25,7 +25,10 @@ func (stub *authIdentityRepoStub) GetByEmail(string) (*domain.AuthIdentity, erro
 	return stub.identity, nil
 }
 
-type sessionRepoStub struct{}
+type sessionRepoStub struct {
+	session *domain.Session
+	err     error
+}
 
 func (stub *sessionRepoStub) Add(session *domain.Session) error {
 	return nil
@@ -40,7 +43,11 @@ func (stub *sessionRepoStub) GetUserSessions(uuid.UUID) ([]*domain.Session, erro
 }
 
 func (stub *sessionRepoStub) GetSession(uuid.UUID) (*domain.Session, error) {
-	return nil, nil
+	if stub.err != nil {
+		return nil, stub.err
+	}
+
+	return stub.session, nil
 }
 
 type hasherStub struct{}
