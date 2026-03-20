@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"strings"
 
 	"github.com/CooklyDev/AuthService/internal"
 	"github.com/CooklyDev/AuthService/internal/adapters"
@@ -16,7 +15,7 @@ import (
 	_ "github.com/CooklyDev/AuthService/docs"
 )
 
-func initContainer() *internal.Container {
+func initContainer(postgresConfig *internal.PostgresConfig, redisConfig *internal.RedisConfig, appConfig *internal.AppConfig) *internal.Container {
 	// Initialize the container and its dependencies
 	logger := internal.NewConsoleLogger()
 	hasher := adapters.NewBcryptHasher()
@@ -25,21 +24,14 @@ func initContainer() *internal.Container {
 		logger,
 		hasher,
 		context.Background(),
+		postgresConfig,
+		redisConfig,
+		appConfig,
 	)
 	if err != nil {
 		panic(err)
 	}
 	return container
-}
-
-func resolveAddress() string {
-	port, exists := internal.LookupEnvOptional("APP_PORT")
-	port = strings.TrimSpace(port)
-	if !exists || strings.TrimSpace(port) == "" {
-		return ":8080"
-	}
-
-	return ":" + strings.TrimPrefix(port, ":")
 }
 
 // @title Cookly Auth Service API
@@ -48,7 +40,15 @@ func resolveAddress() string {
 // @BasePath /api/v1
 // @schemes http
 func main() {
-	container := initContainer()
+	postgresConfig := internal.NewPostgresConfig()
+	redisConfig := internal.NewRedisConfig()
+	appConfig := internal.NewAppConfig()
+
+	container := initContainer(
+		postgresConfig,
+		redisConfig,
+		appConfig,
+	)
 	defer container.Close()
 
 	router := gin.Default()
@@ -62,9 +62,7 @@ func main() {
 	v1.POST("/login", presentation.Login)
 	v1.POST("/logout", presentation.Logout)
 
-	address := resolveAddress()
-
-	if err := router.Run(address); err != nil {
+	if err := router.Run(":" + appConfig.AppPort); err != nil {
 		panic(err)
 	}
 }

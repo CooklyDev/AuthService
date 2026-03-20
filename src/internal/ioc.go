@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/CooklyDev/AuthService/internal/adapters"
 	"github.com/CooklyDev/AuthService/internal/application"
@@ -16,52 +15,40 @@ import (
 )
 
 type Container struct {
-	logger       domain.Logger
-	hasher       application.PasswordHasher
-	postgresPool *pgxpool.Pool
-	redisClient  *redis.Client
-	sessionTTL   time.Duration
+	logger         domain.Logger
+	hasher         application.PasswordHasher
+	postgresPool   *pgxpool.Pool
+	redisClient    *redis.Client
+	PostgresConfig *PostgresConfig
+	RedisConfig    *RedisConfig
+	AppConfig      *AppConfig
 }
 
 func NewContainer(
 	logger domain.Logger,
 	hasher application.PasswordHasher,
 	ctx context.Context,
+	postgresConfig *PostgresConfig,
+	redisConfig *RedisConfig,
+	appConfig *AppConfig,
 ) (*Container, error) {
-	var sessionTTL time.Duration
-
-	sessionTTLStr, exists := LookupEnvOptional("SESSION_TTL")
-	if !exists {
-		sessionTTL = time.Hour * 24
-	} else {
-		parsedTTL, err := time.ParseDuration(sessionTTLStr)
-		if err != nil {
-			logger.Error(
-				fmt.Sprintf(
-					"init container failed: operation=parse_session_ttl error=%s",
-					err.Error(),
-				),
-			)
-			return nil, err
-		}
-		sessionTTL = parsedTTL
-	}
-
-	pool, err := newPostgresPool(ctx, logger)
+	pool, err := newPostgresPool(ctx, logger, *postgresConfig)
 	if err != nil {
 		return nil, err
 	}
-	redisClient, err := newRedisClient(ctx, logger)
+	redisClient, err := newRedisClient(ctx, logger, *redisConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Container{
-		logger:       logger,
-		hasher:       hasher,
-		postgresPool: pool,
-		redisClient:  redisClient,
-		sessionTTL:   sessionTTL,
+		logger:         logger,
+		hasher:         hasher,
+		postgresPool:   pool,
+		redisClient:    redisClient,
+		PostgresConfig: postgresConfig,
+		RedisConfig:    redisConfig,
+		AppConfig:      appConfig,
 	}, nil
 }
 
@@ -103,40 +90,21 @@ func (c *Container) GetAuthService(sessionID uuid.UUID) (*applicationusecases.Au
 		return nil, err
 	}
 
-	uow := adapters.NewUnitOfWorkApp(c.postgresPool, c.redisClient, c.logger, c.sessionTTL)
+	uow := adapters.NewUnitOfWorkApp(c.postgresPool, c.redisClient, c.logger, c.AppConfig.SessionTTL, c.AppConfig.SessionPrefix)
 	provider := adapters.NewIdProvider(sessionID, uow.SessionRepository())
 
 	return c.CreateAuthService(uow, provider), nil
 }
 
-func newPostgresPool(ctx context.Context, logger domain.Logger) (*pgxpool.Pool, error) {
-	host := LookupEnvRequired("DB_HOST")
-	portStr := LookupEnvRequired("DB_PORT")
-	user := LookupEnvRequired("DB_USER")
-	password := LookupEnvRequired("DB_PASSWORD")
-	database := LookupEnvRequired("DB_NAME")
-
-	var port uint16
-	_, err := fmt.Sscanf(portStr, "%d", &port)
-	if err != nil {
-		logger.Error(
-			fmt.Sprintf(
-				"init postgres pool failed: operation=parse_port error=%s",
-				err.Error(),
-			),
-		)
-
-		return nil, err
-	}
-
+func newPostgresPool(ctx context.Context, logger domain.Logger, config PostgresConfig) (*pgxpool.Pool, error) {
 	pool, err := adapters.NewPostgresPool(
 		ctx,
 		logger,
-		host,
-		port,
-		user,
-		password,
-		database,
+		config.Host,
+		config.Port,
+		config.User,
+		config.Password,
+		config.DBName,
 	)
 	if err != nil {
 		return nil, err
@@ -145,25 +113,8 @@ func newPostgresPool(ctx context.Context, logger domain.Logger) (*pgxpool.Pool, 
 	return pool, nil
 }
 
-func newRedisClient(ctx context.Context, logger domain.Logger) (*redis.Client, error) {
-	host := LookupEnvRequired("REDIS_HOST")
-	portStr := LookupEnvRequired("REDIS_PORT")
-	password, _ := LookupEnvOptional("REDIS_PASSWORD")
-
-	var port uint16
-	_, err := fmt.Sscanf(portStr, "%d", &port)
-	if err != nil {
-		logger.Error(
-			fmt.Sprintf(
-				"init redis client failed: operation=parse_port error=%s",
-				err.Error(),
-			),
-		)
-
-		return nil, err
-	}
-
-	return adapters.NewRedisClient(ctx, logger, host, port, password)
+func newRedisClient(ctx context.Context, logger domain.Logger, config RedisConfig) (*redis.Client, error) {
+	return adapters.NewRedisClient(ctx, logger, config.Host, config.Port, config.Password)
 }
 
 func (c *Container) CreateAuthService(uow *adapters.UnitOfWorkApp, idProvider application.IdentityProvider) *applicationusecases.AuthService {

@@ -20,6 +20,7 @@ type UnitOfWorkApp struct {
 	authIdentityRepo application.AuthIdentityRepo
 	sessionRepo      application.SessionRepo
 	sessionTTL       time.Duration
+	sessionKeyPrefix string
 }
 
 func NewUnitOfWorkApp(
@@ -27,12 +28,14 @@ func NewUnitOfWorkApp(
 	client *redis.Client,
 	logger domain.Logger,
 	sessionTTL time.Duration,
+	sessionKeyPrefix string,
 ) *UnitOfWorkApp {
 	uow := &UnitOfWorkApp{
-		pool:        pool,
-		redisClient: client,
-		logger:      logger,
-		sessionTTL:  sessionTTL,
+		pool:             pool,
+		redisClient:      client,
+		logger:           logger,
+		sessionTTL:       sessionTTL,
+		sessionKeyPrefix: sessionKeyPrefix,
 	}
 
 	uow.bind(pool, client)
@@ -132,5 +135,5 @@ func (u *UnitOfWorkApp) bind(db DBTX, redis *redis.Client) {
 	u.redisClient = redis
 	u.userRepo = NewPgxUserRepository(db)
 	u.authIdentityRepo = NewPgxAuthIdentityRepository(db)
-	u.sessionRepo = NewRedisSessionRepository(redis, u.sessionTTL)
+	u.sessionRepo = NewRedisSessionRepository(redis, u.sessionTTL, u.sessionKeyPrefix)
 }
