@@ -105,6 +105,7 @@ func newPostgresPool(ctx context.Context, logger domain.Logger, config PostgresC
 		config.User,
 		config.Password,
 		config.DBName,
+		config.SSLMode,
 	)
 	if err != nil {
 		return nil, err

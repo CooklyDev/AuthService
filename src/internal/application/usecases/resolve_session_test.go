@@ -18,7 +18,8 @@ func TestResolveSessionSuccess(t *testing.T) {
 		UserID: userID,
 	}
 	service := AuthService{
-		UoW: uow,
+		Logger: &loggerStub{},
+		UoW:    uow,
 	}
 
 	// Act
@@ -45,7 +46,8 @@ func TestResolveSessionReturnsError(t *testing.T) {
 	uow := newUoWStub()
 	uow.sessionRepo.err = expectedErr
 	service := AuthService{
-		UoW: uow,
+		Logger: &loggerStub{},
+		UoW:    uow,
 	}
 
 	// Act

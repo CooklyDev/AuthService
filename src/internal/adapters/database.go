@@ -16,6 +16,7 @@ func NewPostgresPool(
 	user string,
 	password string,
 	database string,
+	sslMode string,
 ) (*pgxpool.Pool, error) {
 	logger.Info(
 		fmt.Sprintf(
@@ -27,12 +28,13 @@ func NewPostgresPool(
 	)
 
 	connString := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s",
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		host,
 		port,
 		user,
 		password,
 		database,
+		sslMode,
 	)
 
 	config, err := pgxpool.ParseConfig(connString)
