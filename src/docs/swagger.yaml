@@ -7,12 +7,47 @@ definitions:
       message:
         type: string
     type: object
-  presentation.Response:
+  presentation.ErrorResponse:
     properties:
-      data: {}
       error:
         $ref: '#/definitions/presentation.ErrorInfo'
       success:
+        example: false
+        type: boolean
+    type: object
+  presentation.LogoutResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
+    type: object
+  presentation.ResolveSessionData:
+    properties:
+      SessionID:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      UserID:
+        example: 7b1f5cde-8a0f-4bfb-b5e8-9d4dd0c5a7f3
+        format: uuid
+        type: string
+    type: object
+  presentation.ResolveSessionResponse:
+    properties:
+      data:
+        $ref: '#/definitions/presentation.ResolveSessionData'
+      success:
+        example: true
+        type: boolean
+    type: object
+  presentation.SessionIDResponse:
+    properties:
+      data:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        format: uuid
+        type: string
+      success:
+        example: true
         type: boolean
     type: object
 info:
@@ -41,17 +76,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Returns the created session ID in data
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.SessionIDResponse'
         "400":
-          description: Bad Request
+          description: Business rule violation or adapter invariant violation
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
       summary: Login user
       tags:
       - Authentication
@@ -68,17 +103,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Returns success without data
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.LogoutResponse'
         "400":
-          description: Bad Request
+          description: Invalid session ID, business rule violation, or adapter invariant
+            violation
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
       summary: Logout current session
       tags:
       - Authentication
@@ -107,17 +143,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Returns the created session ID in data
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.SessionIDResponse'
         "400":
-          description: Bad Request
+          description: Business rule violation or adapter invariant violation
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
       summary: Register user
       tags:
       - Authentication
@@ -136,17 +172,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Returns resolved session and user identifiers in data
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ResolveSessionResponse'
         "400":
-          description: Bad Request
+          description: Invalid session ID, business rule violation, or adapter invariant
+            violation
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
-            $ref: '#/definitions/presentation.Response'
+            $ref: '#/definitions/presentation.ErrorResponse'
       summary: Resolve current session
       tags:
       - Authentication

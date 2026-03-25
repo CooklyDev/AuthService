@@ -37,7 +37,7 @@ func NewRedisClient(
 			),
 		)
 
-		return nil, NewAdapterError("ping redis", err)
+		return nil, NewServerError("ping redis", err)
 	}
 
 	return client, nil

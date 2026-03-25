@@ -47,8 +47,12 @@ func MapAppError(err error) (int, string, string) {
 		return http.StatusBadRequest, "BUSINESS_RULE_VIOLATION", err.Error()
 	}
 
-	if errors.Is(err, adapters.ErrAdapter) {
-		return http.StatusBadRequest, "ADAPTER_ERROR", "Invalid input"
+	if errors.Is(err, adapters.ErrInvariant) {
+		return http.StatusBadRequest, "ADAPTER_INVARIANT_VIOLATION", "request violates service invariants"
+	}
+
+	if errors.Is(err, adapters.ErrServer) {
+		return http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", "internal server error"
 	}
 
 	// Default to internal server error for unrecognized errors

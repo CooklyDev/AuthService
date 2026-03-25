@@ -14,9 +14,9 @@ import (
 // @Tags Authentication
 // @Produce json
 // @Param X-Session-ID header string true "Current session ID"
-// @Success 200 {object} Response
-// @Failure 400 {object} Response
-// @Failure 500 {object} Response
+// @Success 200 {object} LogoutResponse "Returns success without data"
+// @Failure 400 {object} ErrorResponse "Invalid session ID, business rule violation, or adapter invariant violation"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /logout [post]
 func Logout(c *gin.Context) {
 	sessionIDHeader := strings.TrimSpace(c.GetHeader("X-Session-ID"))

@@ -46,21 +46,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Returns the created session ID in data",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.SessionIDResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Business rule violation or adapter invariant violation",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     }
                 }
@@ -87,21 +87,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Returns success without data",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.LogoutResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid session ID, business rule violation, or adapter invariant violation",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     }
                 }
@@ -145,21 +145,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Returns the created session ID in data",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.SessionIDResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Business rule violation or adapter invariant violation",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     }
                 }
@@ -189,21 +189,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Returns resolved session and user identifiers in data",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ResolveSessionResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid session ID, business rule violation, or adapter invariant violation",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/presentation.Response"
+                            "$ref": "#/definitions/presentation.ErrorResponse"
                         }
                     }
                 }
@@ -222,15 +222,65 @@ const docTemplate = `{
                 }
             }
         },
-        "presentation.Response": {
+        "presentation.ErrorResponse": {
             "type": "object",
             "properties": {
-                "data": {},
                 "error": {
                     "$ref": "#/definitions/presentation.ErrorInfo"
                 },
                 "success": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "presentation.LogoutResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "presentation.ResolveSessionData": {
+            "type": "object",
+            "properties": {
+                "SessionID": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "UserID": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "7b1f5cde-8a0f-4bfb-b5e8-9d4dd0c5a7f3"
+                }
+            }
+        },
+        "presentation.ResolveSessionResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/presentation.ResolveSessionData"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "presentation.SessionIDResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         }

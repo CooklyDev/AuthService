@@ -44,7 +44,7 @@ func (r *PgxUserRepository) Add(user *domain.User) error {
 	)
 
 	if err != nil {
-		return NewAdapterError("add user", err)
+		return NewServerError("add user", err)
 	}
 
 	return nil
@@ -76,7 +76,7 @@ func (r *PgxAuthIdentityRepository) Add(identity *domain.AuthIdentity) error {
 		identity.PasswordHash,
 	)
 	if err != nil {
-		return NewAdapterError("add auth identity", err)
+		return NewServerError("add auth identity", err)
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func (r *PgxAuthIdentityRepository) GetByEmail(email string) (*domain.AuthIdenti
 			return nil, nil
 		}
 
-		return nil, NewAdapterError("get auth identity by email", err)
+		return nil, NewServerError("get auth identity by email", err)
 	}
 
 	return &identity, nil
@@ -129,13 +129,13 @@ func (r *RedisSessionRepository) GetUserSessions(userID uuid.UUID) ([]*domain.Se
 	for {
 		keys, nextCursor, err := r.redisClient.Scan(ctx, cursor, r.sessionKeyPrefix+"*", 100).Result()
 		if err != nil {
-			return nil, NewAdapterError("get user sessions", err)
+			return nil, NewServerError("get user sessions", err)
 		}
 
 		if len(keys) > 0 {
 			values, err := r.redisClient.MGet(ctx, keys...).Result()
 			if err != nil {
-				return nil, NewAdapterError("get user sessions", err)
+				return nil, NewServerError("get user sessions", err)
 			}
 
 			for index, key := range keys {
@@ -145,7 +145,7 @@ func (r *RedisSessionRepository) GetUserSessions(userID uuid.UUID) ([]*domain.Se
 
 				storedUserID, err := redisUserID(values[index])
 				if err != nil {
-					return nil, NewAdapterError("get user sessions", err)
+					return nil, NewInvariantError("get user sessions", err)
 				}
 				if storedUserID != userID {
 					continue
@@ -153,12 +153,12 @@ func (r *RedisSessionRepository) GetUserSessions(userID uuid.UUID) ([]*domain.Se
 
 				sessionID, err := r.redisSessionID(key)
 				if err != nil {
-					return nil, NewAdapterError("get user sessions", err)
+					return nil, NewInvariantError("get user sessions", err)
 				}
 
 				session, err := domain.NewSession(sessionID, storedUserID)
 				if err != nil {
-					return nil, NewAdapterError("get user sessions", err)
+					return nil, NewInvariantError("get user sessions", err)
 				}
 
 				sessions = append(sessions, session)
@@ -181,17 +181,17 @@ func (r *RedisSessionRepository) GetSession(sessionID uuid.UUID) (*domain.Sessio
 			return nil, nil
 		}
 
-		return nil, NewAdapterError("get session", err)
+		return nil, NewServerError("get session", err)
 	}
 
 	userID, err := uuid.Parse(value)
 	if err != nil {
-		return nil, NewAdapterError("get session", err)
+		return nil, NewInvariantError("get session", err)
 	}
 
 	session, err := domain.NewSession(sessionID, userID)
 	if err != nil {
-		return nil, NewAdapterError("get session", err)
+		return nil, NewInvariantError("get session", err)
 	}
 
 	return session, nil
@@ -261,7 +261,7 @@ func (r *PgxSessionOutboxRepository) addMessage(eventType string, session *domai
 		TTLSeconds: int64(ttl / time.Second),
 	})
 	if err != nil {
-		return NewAdapterError("marshal session outbox payload", err)
+		return NewInvariantError("marshal session outbox payload", err)
 	}
 
 	_, err = r.db.Exec(
@@ -274,7 +274,7 @@ func (r *PgxSessionOutboxRepository) addMessage(eventType string, session *domai
 		false,
 	)
 	if err != nil {
-		return NewAdapterError("add session outbox message", err)
+		return NewServerError("add session outbox message", err)
 	}
 
 	return nil

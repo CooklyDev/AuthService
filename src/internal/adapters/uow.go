@@ -56,7 +56,7 @@ func (u *UnitOfWorkApp) Begin() error {
 			),
 		)
 
-		return err
+		return NewServerError("begin transaction", err)
 	}
 	u.bind(pgxTX, u.redisClient)
 
@@ -83,7 +83,7 @@ func (u *UnitOfWorkApp) Commit() error {
 			),
 		)
 
-		return err
+		return NewServerError("commit transaction", err)
 	}
 
 	u.bind(u.pool, u.redisClient)
@@ -111,7 +111,7 @@ func (u *UnitOfWorkApp) Rollback() error {
 			),
 		)
 
-		return err
+		return NewServerError("rollback transaction", err)
 	}
 
 	u.bind(u.pool, u.redisClient)

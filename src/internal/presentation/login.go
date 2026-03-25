@@ -10,9 +10,9 @@ import "github.com/gin-gonic/gin"
 // @Produce json
 // @Param email formData string true "Email"
 // @Param password formData string true "Password"
-// @Success 200 {object} Response
-// @Failure 400 {object} Response
-// @Failure 500 {object} Response
+// @Success 200 {object} SessionIDResponse "Returns the created session ID in data"
+// @Failure 400 {object} ErrorResponse "Business rule violation or adapter invariant violation"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /login [post]
 func Login(c *gin.Context) {
 	email := c.PostForm("email")

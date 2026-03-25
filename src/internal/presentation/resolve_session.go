@@ -14,9 +14,9 @@ import (
 // @Accept x-www-form-urlencoded
 // @Produce json
 // @Param session_id formData string true "Session ID"
-// @Success 200 {object} Response
-// @Failure 400 {object} Response
-// @Failure 500 {object} Response
+// @Success 200 {object} ResolveSessionResponse "Returns resolved session and user identifiers in data"
+// @Failure 400 {object} ErrorResponse "Invalid session ID, business rule violation, or adapter invariant violation"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /resolve [post]
 func ResolveSession(c *gin.Context) {
 	sessionIDRaw := c.PostForm("session_id")

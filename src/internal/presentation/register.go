@@ -11,9 +11,9 @@ import "github.com/gin-gonic/gin"
 // @Param username formData string true "Username"
 // @Param email formData string true "Email"
 // @Param password formData string true "Password"
-// @Success 200 {object} Response
-// @Failure 400 {object} Response
-// @Failure 500 {object} Response
+// @Success 200 {object} SessionIDResponse "Returns the created session ID in data"
+// @Failure 400 {object} ErrorResponse "Business rule violation or adapter invariant violation"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /register [post]
 func Register(c *gin.Context) {
 	username := c.PostForm("username")
