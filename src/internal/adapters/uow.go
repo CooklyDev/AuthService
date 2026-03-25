@@ -12,15 +12,16 @@ import (
 )
 
 type UnitOfWorkApp struct {
-	pool             *pgxpool.Pool
-	redisClient      *redis.Client
-	pgxTX            DBTX
-	logger           domain.Logger
-	userRepo         application.UserRepo
-	authIdentityRepo application.AuthIdentityRepo
-	sessionRepo      application.SessionRepo
-	sessionTTL       time.Duration
-	sessionKeyPrefix string
+	pool              *pgxpool.Pool
+	redisClient       *redis.Client
+	pgxTX             DBTX
+	logger            domain.Logger
+	userRepo          application.UserRepo
+	authIdentityRepo  application.AuthIdentityRepo
+	sessionRepo       application.SessionRepo
+	sessionOutboxRepo application.SessionOutboxRepo
+	sessionTTL        time.Duration
+	sessionKeyPrefix  string
 }
 
 func NewUnitOfWorkApp(
@@ -130,10 +131,15 @@ func (u *UnitOfWorkApp) SessionRepository() application.SessionRepo {
 	return u.sessionRepo
 }
 
+func (u *UnitOfWorkApp) SessionOutboxRepository() application.SessionOutboxRepo {
+	return u.sessionOutboxRepo
+}
+
 func (u *UnitOfWorkApp) bind(db DBTX, redis *redis.Client) {
 	u.pgxTX = db
 	u.redisClient = redis
 	u.userRepo = NewPgxUserRepository(db)
 	u.authIdentityRepo = NewPgxAuthIdentityRepository(db)
 	u.sessionRepo = NewRedisSessionRepository(redis, u.sessionTTL, u.sessionKeyPrefix)
+	u.sessionOutboxRepo = NewPgxSessionOutboxRepository(db, u.sessionTTL, u.sessionKeyPrefix)
 }

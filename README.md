@@ -14,13 +14,15 @@ The service manages the authentication lifecycle of a user account and handles u
 cp .example.env .env
 ```
 
-2. Start PostgreSQL, run migrations, and start Auth Service:
+2. Start PostgreSQL, run migrations, and start Auth Service with Publisher:
 
 ```bash
 docker compose up --build
 ```
 
 By default, the service will be available at `http://localhost:8080`.
+
+The Publisher runs as a separate process and syncs unpublished outbox records to Redis.
 
 Swagger UI can be accessed at `http://localhost:8080/swagger/index.html`.
 

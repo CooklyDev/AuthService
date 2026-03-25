@@ -30,16 +30,12 @@ type sessionRepoStub struct {
 	err     error
 }
 
-func (stub *sessionRepoStub) Add(session *domain.Session) error {
-	return nil
-}
-
-func (stub *sessionRepoStub) Delete(uuid.UUID) error {
-	return nil
-}
-
 func (stub *sessionRepoStub) GetUserSessions(uuid.UUID) ([]*domain.Session, error) {
-	return nil, nil
+	if stub.session == nil {
+		return nil, nil
+	}
+
+	return []*domain.Session{stub.session}, nil
 }
 
 func (stub *sessionRepoStub) GetSession(uuid.UUID) (*domain.Session, error) {
@@ -48,6 +44,16 @@ func (stub *sessionRepoStub) GetSession(uuid.UUID) (*domain.Session, error) {
 	}
 
 	return stub.session, nil
+}
+
+type sessionOutboxRepoStub struct{}
+
+func (stub *sessionOutboxRepoStub) AddSessionCreated(*domain.Session) error {
+	return nil
+}
+
+func (stub *sessionOutboxRepoStub) AddSessionDeleted(*domain.Session) error {
+	return nil
 }
 
 type hasherStub struct{}
@@ -71,16 +77,18 @@ func (stub *loggerStub) Warn(string) {}
 func (stub *loggerStub) Error(string) {}
 
 type uowStub struct {
-	userRepo         *userRepoStub
-	authIdentityRepo *authIdentityRepoStub
-	sessionRepo      *sessionRepoStub
+	userRepo          *userRepoStub
+	authIdentityRepo  *authIdentityRepoStub
+	sessionRepo       *sessionRepoStub
+	sessionOutboxRepo *sessionOutboxRepoStub
 }
 
 func newUoWStub() *uowStub {
 	return &uowStub{
-		userRepo:         &userRepoStub{},
-		authIdentityRepo: &authIdentityRepoStub{},
-		sessionRepo:      &sessionRepoStub{},
+		userRepo:          &userRepoStub{},
+		authIdentityRepo:  &authIdentityRepoStub{},
+		sessionRepo:       &sessionRepoStub{},
+		sessionOutboxRepo: &sessionOutboxRepoStub{},
 	}
 }
 
@@ -106,4 +114,8 @@ func (stub *uowStub) AuthIdentityRepository() application.AuthIdentityRepo {
 
 func (stub *uowStub) SessionRepository() application.SessionRepo {
 	return stub.sessionRepo
+}
+
+func (stub *uowStub) SessionOutboxRepository() application.SessionOutboxRepo {
+	return stub.sessionOutboxRepo
 }

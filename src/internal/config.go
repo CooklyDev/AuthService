@@ -69,9 +69,11 @@ func NewRedisConfig() *RedisConfig {
 }
 
 type AppConfig struct {
-	AppPort       string
-	SessionTTL    time.Duration
-	SessionPrefix string
+	AppPort            string
+	SessionTTL         time.Duration
+	SessionPrefix      string
+	PublisherInterval  time.Duration
+	PublisherBatchSize uint64
 }
 
 func convertSessionTTL(sessionTTLStr string) time.Duration {
@@ -82,10 +84,42 @@ func convertSessionTTL(sessionTTLStr string) time.Duration {
 	return sessionTTL
 }
 
+func convertDurationOrDefault(value string, defaultValue time.Duration, envName string) time.Duration {
+	if value == "" {
+		return defaultValue
+	}
+
+	duration, err := time.ParseDuration(value)
+	if err != nil {
+		panic("invalid " + envName + " value: " + value)
+	}
+
+	return duration
+}
+
+func convertUint64OrDefault(value string, defaultValue uint64, envName string) uint64 {
+	if value == "" {
+		return defaultValue
+	}
+
+	var parsed uint64
+	_, err := fmt.Sscanf(value, "%d", &parsed)
+	if err != nil {
+		panic("invalid " + envName + " value: " + value)
+	}
+
+	return parsed
+}
+
 func NewAppConfig() *AppConfig {
+	publisherInterval, _ := LookupEnvOptional("PUBLISHER_INTERVAL")
+	publisherBatchSize, _ := LookupEnvOptional("PUBLISHER_BATCH_SIZE")
+
 	return &AppConfig{
-		SessionTTL:    convertSessionTTL(LookupEnvRequired("SESSION_TTL")),
-		AppPort:       LookupEnvRequired("APP_PORT"),
-		SessionPrefix: LookupEnvRequired("SESSION_PREFIX"),
+		SessionTTL:         convertSessionTTL(LookupEnvRequired("SESSION_TTL")),
+		AppPort:            LookupEnvRequired("APP_PORT"),
+		SessionPrefix:      LookupEnvRequired("SESSION_PREFIX"),
+		PublisherInterval:  convertDurationOrDefault(publisherInterval, time.Second, "PUBLISHER_INTERVAL"),
+		PublisherBatchSize: convertUint64OrDefault(publisherBatchSize, 100, "PUBLISHER_BATCH_SIZE"),
 	}
 }

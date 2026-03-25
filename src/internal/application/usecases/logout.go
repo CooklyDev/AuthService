@@ -44,23 +44,24 @@ func (service AuthService) Logout(sessionID uuid.UUID) error {
 		return err
 	}
 
-	sessionFound := false
+	var sessionToDelete *domain.Session
 	for _, session := range userSessions {
 		if session.ID == sessionID {
-			sessionFound = true
+			sessionToDelete = session
 			break
 		}
 	}
 
-	if !sessionFound {
+	if sessionToDelete == nil {
 		return nil
 	}
 
-	err = service.UoW.Commit()
+	sessionOutboxRepo := service.UoW.SessionOutboxRepository()
+	err = sessionOutboxRepo.AddSessionDeleted(sessionToDelete)
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
-				"logout failed: commit transaction: error=%s",
+				"logout failed: enqueue session deleted event: error=%s",
 				err.Error(),
 			),
 		)
@@ -68,11 +69,11 @@ func (service AuthService) Logout(sessionID uuid.UUID) error {
 		return err
 	}
 
-	err = sessionRepo.Delete(sessionID)
+	err = service.UoW.Commit()
 	if err != nil {
 		service.Logger.Error(
 			fmt.Sprintf(
-				"logout failed: delete session: error=%s",
+				"logout failed: commit transaction: error=%s",
 				err.Error(),
 			),
 		)

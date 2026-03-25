@@ -80,6 +80,35 @@ services:
       retries: 5
       start_period: 10s
 
+  publisher:
+    build:
+      context: .
+      dockerfile: Dockerfile.publisher
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSL_MODE: ${DB_SSL_MODE}
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SESSION_TTL: ${SESSION_TTL}
+      SESSION_PREFIX: ${SESSION_PREFIX}
+      APP_PORT: ${APP_PORT:-8080}
+      PUBLISHER_INTERVAL: ${PUBLISHER_INTERVAL}
+      PUBLISHER_BATCH_SIZE: ${PUBLISHER_BATCH_SIZE}
+      GIN_MODE: release
+
 volumes:
   postgres-data:
   redis-data:

@@ -16,6 +16,7 @@ type UnitOfWork interface {
 	UserRepository() UserRepo
 	AuthIdentityRepository() AuthIdentityRepo
 	SessionRepository() SessionRepo
+	SessionOutboxRepository() SessionOutboxRepo
 }
 
 type IdentityProvider interface {

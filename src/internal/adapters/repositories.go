@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -120,29 +121,6 @@ func NewRedisSessionRepository(redisClient *redis.Client, sessionTTL time.Durati
 	return &RedisSessionRepository{redisClient: redisClient, sessionTTL: sessionTTL, sessionKeyPrefix: sessionKeyPrefix}
 }
 
-func (r *RedisSessionRepository) Add(session *domain.Session) error {
-	key := r.redisSessionKey(session.ID)
-	value := session.UserID.String()
-
-	err := r.redisClient.Set(context.Background(), key, value, r.sessionTTL).Err()
-	if err != nil {
-		return NewAdapterError("add session", err)
-	}
-
-	return nil
-}
-
-func (r *RedisSessionRepository) Delete(sessionID uuid.UUID) error {
-	key := r.redisSessionKey(sessionID)
-
-	err := r.redisClient.Del(context.Background(), key).Err()
-	if err != nil {
-		return NewAdapterError("delete session", err)
-	}
-
-	return nil
-}
-
 func (r *RedisSessionRepository) GetUserSessions(userID uuid.UUID) ([]*domain.Session, error) {
 	ctx := context.Background()
 	cursor := uint64(0)
@@ -241,4 +219,63 @@ func redisUserID(value interface{}) (uuid.UUID, error) {
 	default:
 		return uuid.Nil, fmt.Errorf("invalid session value type %T", value)
 	}
+}
+
+type PgxSessionOutboxRepository struct {
+	db               DBTX
+	sessionTTL       time.Duration
+	sessionKeyPrefix string
+}
+
+func NewPgxSessionOutboxRepository(db DBTX, sessionTTL time.Duration, sessionKeyPrefix string) *PgxSessionOutboxRepository {
+	return &PgxSessionOutboxRepository{
+		db:               db,
+		sessionTTL:       sessionTTL,
+		sessionKeyPrefix: sessionKeyPrefix,
+	}
+}
+
+func (r *PgxSessionOutboxRepository) AddSessionCreated(session *domain.Session) error {
+	return r.addMessage("session.created", session, r.sessionTTL)
+}
+
+func (r *PgxSessionOutboxRepository) AddSessionDeleted(session *domain.Session) error {
+	return r.addMessage("session.deleted", session, 0)
+}
+
+func (r *PgxSessionOutboxRepository) addMessage(eventType string, session *domain.Session, ttl time.Duration) error {
+	const query = `
+		INSERT INTO outbox (id, aggregate_type, event_type, payload, published)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+
+	payload, err := json.Marshal(struct {
+		SessionID  uuid.UUID `json:"session_id"`
+		UserID     uuid.UUID `json:"user_id"`
+		SessionKey string    `json:"session_key"`
+		TTLSeconds int64     `json:"ttl_seconds"`
+	}{
+		SessionID:  session.ID,
+		UserID:     session.UserID,
+		SessionKey: r.sessionKeyPrefix + session.ID.String(),
+		TTLSeconds: int64(ttl / time.Second),
+	})
+	if err != nil {
+		return NewAdapterError("marshal session outbox payload", err)
+	}
+
+	_, err = r.db.Exec(
+		context.Background(),
+		query,
+		uuid.New(),
+		"session",
+		eventType,
+		payload,
+		false,
+	)
+	if err != nil {
+		return NewAdapterError("add session outbox message", err)
+	}
+
+	return nil
 }

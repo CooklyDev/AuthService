@@ -167,6 +167,21 @@ func (service AuthService) LocalRegister(username string, email string, password
 		return nil, err
 	}
 
+	sessionOutboxRepo := service.UoW.SessionOutboxRepository()
+	err = sessionOutboxRepo.AddSessionCreated(session)
+	if err != nil {
+		service.Logger.Error(
+			fmt.Sprintf(
+				"register failed: enqueue session created event: username=%s email=%s error=%s",
+				username,
+				maskedEmail,
+				err.Error(),
+			),
+		)
+
+		return nil, err
+	}
+
 	err = service.UoW.Commit()
 	if err != nil {
 		service.Logger.Error(
@@ -177,21 +192,6 @@ func (service AuthService) LocalRegister(username string, email string, password
 				err.Error(),
 			),
 		)
-		return nil, err
-	}
-
-	sessionRepo := service.UoW.SessionRepository()
-	err = sessionRepo.Add(session)
-	if err != nil {
-		service.Logger.Error(
-			fmt.Sprintf(
-				"register failed: create session after commit: username=%s email=%s error=%s",
-				username,
-				maskedEmail,
-				err.Error(),
-			),
-		)
-
 		return nil, err
 	}
 

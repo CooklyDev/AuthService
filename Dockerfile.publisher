@@ -1,0 +1,25 @@
+FROM golang:1.25.6-alpine AS builder
+
+WORKDIR /app/src
+
+COPY src/go.mod src/go.sum ./
+RUN go mod download
+
+COPY src ./
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/local/bin/auth-publisher ./cmd/publisher
+
+FROM alpine:3.22
+
+RUN apk add --no-cache ca-certificates
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+ENV GIN_MODE=release
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/bin/auth-publisher /usr/local/bin/auth-publisher
+
+USER appuser
+
+ENTRYPOINT ["/usr/local/bin/auth-publisher"]

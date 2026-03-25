@@ -15,8 +15,11 @@ type AuthIdentityRepo interface {
 }
 
 type SessionRepo interface {
-	Add(session *domain.Session) error
-	Delete(sessionID uuid.UUID) error
 	GetUserSessions(userID uuid.UUID) ([]*domain.Session, error)
 	GetSession(sessionID uuid.UUID) (*domain.Session, error)
+}
+
+type SessionOutboxRepo interface {
+	AddSessionCreated(session *domain.Session) error
+	AddSessionDeleted(session *domain.Session) error
 }
