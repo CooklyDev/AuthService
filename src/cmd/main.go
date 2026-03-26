@@ -53,7 +53,7 @@ func main() {
 
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/health", presentation.Health)
 
 	v1.Use(presentation.GetContainer(container))
